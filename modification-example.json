@@ -1,0 +1,8 @@
+{
+  "errorType": "Acte mal fusionné : deux parties différentes ou une partie manquante (المستند مدمج بشكل سيء: جزئين مختلفين أو جزء مفقود)",
+  "agentMessage": "Le document contient des pages de deux actes différents. Veuillez re-scanner uniquement les pages de l'acte numéro 45/2023. Les pages 3-4 appartiennent à un autre document.",
+  "documentId": "12345",
+  "submittedBy": "agent-001",
+  "submittedAt": "2025-10-21T10:30:00Z"
+}
+

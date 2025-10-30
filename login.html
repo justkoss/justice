@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="app.name">acteFlow - Connexion</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="rtl.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <!-- Language Switcher -->
+      <div style="position: absolute; top: 1rem; right: 1rem;">
+        <button id="languageSwitcher" class="language-switcher" title="Switch Language / تبديل اللغة">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span class="lang-code">FR</span>
+        </button>
+      </div>
+
+      <!-- Logo and Title -->
+      <div class="login-header">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 3L2 9l10 6 10-6-10-6z"/>
+          <path d="M2 15l10 6 10-6"/>
+        </svg>
+        <h1 data-i18n="app.name">acteFlow</h1>
+        <p data-i18n="login.subtitle">Authentification sécurisée</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="username" data-i18n="login.username">Nom d'utilisateur</label>
+          <input 
+            type="text" 
+            id="username" 
+            data-i18n-placeholder="login.usernamePlaceholder"
+            placeholder="Entrez votre nom d'utilisateur" 
+            required 
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" data-i18n="login.password">Mot de passe</label>
+          <input 
+            type="password" 
+            id="password" 
+            data-i18n-placeholder="login.passwordPlaceholder"
+            placeholder="Entrez votre mot de passe" 
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="serverUrl" data-i18n="login.serverUrl">URL du serveur</label>
+          <input 
+            type="text" 
+            id="serverUrl" 
+            value="http://localhost:3000" 
+            placeholder="http://localhost:3000"
+          >
+          <small class="help-text" data-i18n="login.serverUrlHelp">Laissez par défaut si le serveur fonctionne localement</small>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+        <button type="submit" id="loginBtn" class="btn-login">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          <span data-i18n="login.signIn">Se connecter</span>
+        </button>
+      </form>
+
+      <!-- Info Section -->
+      <div class="login-info">
+        <div class="info-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span data-i18n="login.firstTimeInfo">Première fois ? Utilisez les identifiants du serveur</span>
+        </div>
+        <div class="info-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span data-i18n="login.offlineInfo">Mode hors ligne disponible après la première connexion</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="login-footer">
+        <p><span data-i18n="app.name">acteFlow</span> <span data-i18n="app.version">v1.0</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

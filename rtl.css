@@ -1,0 +1,394 @@
+/* RTL Support for Arabic Language */
+
+/* Apply RTL direction for Arabic */
+html[dir="rtl"],
+body.rtl {
+  direction: rtl;
+}
+
+/* ====================================
+   RTL MAIN LAYOUT - SWAP PANELS
+   ==================================== */
+
+/* Reverse the main content flex to swap sidebar and processing panel */
+body.rtl .main-content {
+  flex-direction: row-reverse !important;
+}
+
+/* When reversed, sidebar is now on RIGHT - needs left border towards center */
+body.rtl .sidebar {
+  border-right: none !important;
+  border-left: 1px solid #2d3748 !important;
+}
+
+/* When reversed, processing-panel is now on LEFT - needs right border towards center */
+body.rtl .processing-panel {
+  border-left: none !important;
+  border-right: 1px solid #2d3748 !important;
+}
+
+/* ====================================
+   HEADER RTL
+   ==================================== */
+
+/* RTL: Reverse flex direction for header */
+body.rtl .header-content {
+  flex-direction: row-reverse;
+}
+
+body.rtl .header-actions {
+  flex-direction: row-reverse;
+}
+
+body.rtl .logo {
+  flex-direction: row-reverse;
+  gap: 1rem;
+}
+
+/* RTL: Language switcher positioning */
+body.rtl .language-switcher {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* ====================================
+   BUTTONS RTL
+   ==================================== */
+
+/* RTL: Button icon alignment */
+body.rtl .btn-primary,
+body.rtl .btn-logout,
+body.rtl .btn-login,
+body.rtl .btn-save,
+body.rtl .btn-sync,
+body.rtl .btn-reupload {
+  flex-direction: row-reverse;
+}
+
+/* ====================================
+   SIDEBAR RTL
+   ==================================== */
+
+/* RTL: Sidebar tabs */
+body.rtl .sidebar-tabs {
+  flex-direction: row-reverse;
+}
+
+body.rtl .sidebar-tab {
+  flex-direction: row-reverse;
+  gap: 0.5rem;
+}
+
+/* RTL: Filter tabs */
+body.rtl .filter-tabs {
+  flex-direction: row-reverse;
+}
+
+/* RTL: Document list items */
+body.rtl .document-item {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+body.rtl .document-info {
+  text-align: right;
+}
+
+body.rtl .document-meta {
+  justify-content: flex-start;
+}
+
+body.rtl .doc-icon {
+  margin-left: 0.75rem;
+  margin-right: 0;
+}
+
+/* ====================================
+   FORMS RTL
+   ==================================== */
+
+/* RTL: Form groups */
+body.rtl .form-group {
+  text-align: right;
+}
+
+body.rtl .form-group label {
+  text-align: right;
+}
+
+body.rtl .form-group input,
+body.rtl .form-group select,
+body.rtl .form-group textarea {
+  text-align: right;
+}
+
+/* RTL: Searchable select */
+body.rtl .searchable-select {
+  text-align: right;
+}
+
+/* RTL: Select dropdown arrow positioning */
+body.rtl select {
+  background-position: left 0.75rem center;
+  padding-left: 2.5rem;
+  padding-right: 0.75rem;
+}
+
+/* ====================================
+   PROCESSING PANEL RTL
+   ==================================== */
+
+body.rtl .processing-panel {
+  text-align: right;
+}
+
+body.rtl .panel-header {
+  text-align: right;
+}
+
+body.rtl .current-file {
+  text-align: right;
+}
+
+body.rtl .file-name {
+  text-align: right;
+}
+
+/* ====================================
+   VIEWER SECTION RTL
+   ==================================== */
+
+/* RTL: Empty state */
+body.rtl .empty-state {
+  text-align: center;
+}
+
+body.rtl .no-selection {
+  text-align: center;
+}
+
+body.rtl .no-document-selected {
+  text-align: center;
+}
+
+/* RTL: Document viewer - Keep PDF LTR */
+body.rtl .document-viewer {
+  direction: ltr;
+}
+
+/* ====================================
+   LOGIN PAGE RTL
+   ==================================== */
+
+body.rtl .login-box {
+  text-align: right;
+}
+
+body.rtl .login-header {
+  text-align: center;
+}
+
+body.rtl .login-form {
+  text-align: right;
+}
+
+body.rtl .login-info {
+  text-align: right;
+}
+
+body.rtl .login-footer {
+  text-align: center;
+}
+
+/* RTL: Info items */
+body.rtl .info-item {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+body.rtl .info-item svg {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+/* ====================================
+   MISC RTL
+   ==================================== */
+
+/* RTL: Status badges */
+body.rtl .badge {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* RTL: Help text */
+body.rtl .help-text {
+  text-align: right;
+}
+
+body.rtl small {
+  text-align: right;
+  display: block;
+}
+
+/* RTL: Status and error messages */
+body.rtl .status-message,
+body.rtl .error-message {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+/* RTL: Watched folder display */
+body.rtl .watched-folder {
+  flex-direction: row-reverse;
+}
+
+/* RTL: Divider */
+body.rtl .divider {
+  margin: 1.5rem 0;
+}
+
+/* RTL: SVG icons - some need to be flipped */
+body.rtl .btn-logout svg,
+body.rtl .btn-login svg {
+  transform: scaleX(-1);
+}
+
+/* RTL: Modification form */
+body.rtl .modification-form {
+  text-align: right;
+}
+
+body.rtl .modification-header {
+  text-align: right;
+}
+
+body.rtl .modification-details {
+  text-align: right;
+}
+
+body.rtl .modification-actions {
+  flex-direction: row-reverse;
+}
+
+body.rtl .error-display,
+body.rtl .message-display {
+  text-align: right;
+}
+
+body.rtl .error-box,
+body.rtl .message-box {
+  border-left: none;
+  border-right: 4px solid #f56565;
+}
+
+body.rtl .message-box {
+  border-right-color: #4299e1;
+}
+
+/* ====================================
+   LANGUAGE SWITCHER
+   ==================================== */
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #d4af37;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.language-switcher:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #d4af37;
+  transform: translateY(-1px);
+}
+
+.language-switcher svg {
+  width: 20px;
+  height: 20px;
+}
+
+.language-switcher .lang-code {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ====================================
+   SMOOTH TRANSITIONS
+   ==================================== */
+
+/* Ensure smooth language switching */
+.main-content,
+.sidebar,
+.processing-panel,
+* {
+  transition: margin 0.3s ease, padding 0.3s ease, text-align 0.3s ease;
+}
+/* ====================================
+   NOTIFICATIONS RTL
+   ==================================== */
+
+/* RTL: Notifications button badge position */
+body.rtl .notification-badge {
+  right: auto;
+  left: -4px;
+}
+
+/* RTL: Notifications dropdown position */
+body.rtl .notifications-dropdown {
+  right: auto;
+  left: 20px;
+}
+
+/* RTL: Notifications header */
+body.rtl .notifications-header {
+  flex-direction: row-reverse;
+}
+
+/* RTL: Notification items */
+body.rtl .notification-item {
+  text-align: right;
+}
+
+body.rtl .notification-header {
+  flex-direction: row-reverse;
+}
+
+body.rtl .notification-icon {
+  margin-left: 0.75rem;
+  margin-right: 0;
+}
+
+body.rtl .notification-content {
+  text-align: right;
+}
+
+body.rtl .notification-title,
+body.rtl .notification-message,
+body.rtl .notification-time {
+  text-align: right;
+}
+
+/* ====================================
+   SYNC ALL RTL
+   ==================================== */
+
+body.rtl .sync-all-section {
+  text-align: right;
+}
+
+body.rtl .btn-sync-all {
+  flex-direction: row-reverse;
+}
+
+body.rtl .sync-all-status {
+  text-align: right;
+}

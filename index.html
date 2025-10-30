@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="app.name">acteFlow - Gestionnaire de Documents</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="rtl.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3L2 9l10 6 10-6-10-6z"/>
+            <path d="M2 15l10 6 10-6"/>
+          </svg>
+          <h1 data-i18n="app.name">acteFlow</h1>
+        </div>
+        <div class="header-actions">
+          <!-- Language Switcher -->
+          <button id="languageSwitcher" class="language-switcher" title="Switch Language / تبديل اللغة">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span class="lang-code">FR</span>
+          </button>
+          
+          <!-- Notifications Button -->
+          <button id="notificationsBtn" class="notifications-btn" data-i18n-title="notifications.title" title="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+          </button>
+          
+          <button id="selectFolderBtn" class="btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span data-i18n="header.selectFolder">Sélectionner le Dossier à Surveiller</span>
+          </button>
+          <button id="logoutBtn" class="btn-logout" data-i18n-title="header.logout" title="Déconnexion">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="watchedFolderDisplay" class="watched-folder"></div>
+    </header>
+
+    <!-- Notifications Dropdown -->
+    <div id="notificationsDropdown" class="notifications-dropdown" style="display: none;">
+      <div class="notifications-header">
+        <h3 data-i18n="notifications.title">Notifications</h3>
+        <button id="closeNotifications" class="close-notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="notificationsList" class="notifications-list">
+        <div class="empty-notifications">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <p data-i18n="notifications.empty">Aucune notification</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <!-- Sidebar with tabs -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-tabs">
+            <button class="sidebar-tab active" data-tab="documents">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span data-i18n="tabs.documents">Documents</span>
+            </button>
+            <button class="sidebar-tab" data-tab="modifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <span data-i18n="tabs.modifications">Demandes de modification</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Documents Tab Content -->
+        <div id="documentsTab" class="tab-content active">
+          <div class="filter-section">
+            <div class="filter-tabs">
+              <button class="filter-tab active" data-filter="all" data-i18n="filters.all">Tous</button>
+              <button class="filter-tab" data-filter="unprocessed" data-i18n="filters.unprocessed">Non traités</button>
+              <button class="filter-tab" data-filter="processed" data-i18n="filters.processed">Traités</button>
+            </div>
+          </div>
+          
+          <!-- Sync All Button -->
+          <div class="sync-all-section">
+            <button id="syncAllBtn" class="btn-sync-all">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+              </svg>
+              <span data-i18n="sync.syncAll">Synchroniser tous les actes traités</span>
+            </button>
+            <div id="syncAllStatus" class="sync-all-status" style="display: none;"></div>
+          </div>
+          
+          <div id="documentList" class="document-list">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <p data-i18n="documentList.empty">Aucun document trouvé</p>
+              <small data-i18n="documentList.emptyHint">Sélectionnez un dossier pour commencer la surveillance</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modifications Tab Content -->
+        <div id="modificationsTab" class="tab-content">
+          <div id="modificationList" class="document-list">
+            <div class="empty-state">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <p data-i18n="documentList.noModifications">Aucune demande de modification</p>
+              <small data-i18n="documentList.modificationsHint">Les demandes apparaîtront ici</small>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main viewing area -->
+      <main class="viewer-section">
+        <div id="noSelection" class="no-selection">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <h2 data-i18n="viewer.noSelection">Sélectionnez un document pour commencer</h2>
+          <p data-i18n="viewer.noSelectionHint">Cliquez sur un PDF de la liste pour le visualiser et le traiter</p>
+        </div>
+        
+        <div id="documentViewer" class="document-viewer" style="display: none;">
+          <div class="viewer-content">
+            <iframe id="pdfEmbed" type="application/pdf" width="100%" height="100%" frameborder="0"></iframe>
+          </div>
+        </div>
+      </main>
+
+      <!-- Processing panel -->
+      <aside class="processing-panel">
+        <div class="panel-header">
+          <h2 id="panelTitle" data-i18n="processing.title">Traitement de Document</h2>
+        </div>
+        
+        <!-- Document Processing Form -->
+        <div id="processingForm" class="processing-form" style="display: none;">
+          <div class="form-section">
+            <div class="current-file">
+              <label data-i18n="processing.currentDocument">Document actuel</label>
+              <div id="currentFileName" class="file-name"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-group">
+              <label for="bureau" data-i18n="processing.bureau">Bureau</label>
+              <div class="searchable-select">
+                <input type="text" id="bureauSearch" class="search-input" data-i18n-placeholder="processing.searchPlaceholder" placeholder="Rechercher ou ajouter...">
+                <select id="bureau" required size="5"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="registreType" data-i18n="processing.registreType">Type du registre</label>
+              <select id="registreType" required>
+                <option value="" data-i18n="processing.selectType">Sélectionnez un type</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="documentYear" data-i18n="processing.year">Année</label>
+              <input type="number" id="documentYear" data-i18n-placeholder="processing.yearPlaceholder" placeholder="AAAA" min="1900" max="2100" required>
+            </div>
+
+            <div class="form-group">
+              <label for="registreNumber" data-i18n="processing.registreNumber">Numéro de registre</label>
+              <input type="text" id="registreNumber" data-i18n-placeholder="processing.registrePlaceholder" placeholder="Entrez le numéro de registre" required>
+            </div>
+
+            <div class="form-group">
+              <label for="acteNumber" data-i18n="processing.acteNumber">Numéro d'acte</label>
+              <input type="text" id="acteNumber" data-i18n-placeholder="processing.actePlaceholder" placeholder="Entrez le numéro d'acte" required>
+            </div>
+          </div>
+
+          <div class="status-indicator">
+            <span id="statusBadge" class="badge badge-unprocessed" data-i18n="processing.status.unprocessed">Non traité</span>
+          </div>
+
+          <button id="saveBtn" class="btn-save">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="processing.save">Enregistrer et marquer comme traité</span>
+          </button>
+
+          <div class="divider"></div>
+
+          <button id="syncBtn" class="btn-sync">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+            </svg>
+            <span data-i18n="processing.sync">Synchroniser au serveur</span>
+          </button>
+
+          <div id="syncStatus" class="sync-status" style="display: none;"></div>
+        </div>
+
+        <!-- Modification Review Form -->
+        <div id="modificationForm" class="processing-form" style="display: none;">
+          <div class="form-section">
+            <div class="current-file">
+              <label data-i18n="processing.currentDocument">Document</label>
+              <div id="modFileName" class="file-name"></div>
+            </div>
+          </div>
+
+          <!-- Error Information -->
+          <div class="form-section">
+            <div class="error-display">
+              <label data-i18n="processing.errorType">Type d'erreur</label>
+              <div id="errorType" class="error-box"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="message-display">
+              <label data-i18n="processing.agentMessage">Message de l'agent</label>
+              <div id="agentMessage" class="message-box"></div>
+            </div>
+          </div>
+
+          <!-- Document Metadata Fields -->
+          <div class="form-section metadata-section">
+            <div class="section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span data-i18n="processing.metadata">Métadonnées de l'acte</span>
+            </div>
+
+            <div class="form-group">
+              <label for="modBureau" data-i18n="processing.bureau">Bureau</label>
+              <div class="searchable-select">
+                <input type="text" id="modBureauSearch" class="search-input" data-i18n-placeholder="processing.searchPlaceholder" placeholder="Rechercher ou ajouter...">
+                <select id="modBureau" required size="5"></select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="modRegistreType" data-i18n="processing.registreType">Type du registre</label>
+              <select id="modRegistreType" required>
+                <option value="" data-i18n="processing.selectType">Sélectionnez un type</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="modDocumentYear" data-i18n="processing.year">Année</label>
+              <input type="number" id="modDocumentYear" data-i18n-placeholder="processing.yearPlaceholder" placeholder="AAAA" min="1900" max="2100" required>
+            </div>
+
+            <div class="form-group">
+              <label for="modRegistreNumber" data-i18n="processing.registreNumber">Numéro de registre</label>
+              <input type="text" id="modRegistreNumber" data-i18n-placeholder="processing.registrePlaceholder" placeholder="Entrez le numéro de registre" required>
+            </div>
+
+            <div class="form-group">
+              <label for="modActeNumber" data-i18n="processing.acteNumber">Numéro d'acte</label>
+              <input type="text" id="modActeNumber" data-i18n-placeholder="processing.actePlaceholder" placeholder="Entrez le numéro d'acte" required>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <button id="saveModificationBtn" class="btn-save">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="processing.saveModification">Enregistrer les modifications</span>
+          </button>
+
+          <div class="divider"></div>
+
+          <div class="modification-actions">
+            <!-- Step 1: Select New File -->
+            <button id="reuploadBtn" class="btn-reupload">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span data-i18n="processing.selectNewFile">1. Sélectionner un nouveau fichier</span>
+            </button>
+
+            <!-- Step 2: Confirm and Send -->
+            <button id="saveModificationBtn" class="btn-save opacity-50" disabled >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span data-i18n="processing.confirmAndSend">2. Confirmer et envoyer</span>
+            </button>
+            
+          </div>
+        </div>
+
+        <div id="noDocumentSelected" class="no-document-selected">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          <p data-i18n="processing.noDocumentSelected">Sélectionnez un document à traiter</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "acteflow",
+  "version": "1.0.0",
+  "description": "Gestionnaire de documents avec authentification et synchronisation",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --disable-gpu"
+  },
+  "keywords": [
+    "electron",
+    "pdf",
+    "sqlite",
+    "acte",
+    "registre"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "chokidar": "^3.5.3",
+    "path": "^0.12.7",
+    "sql.js": "^1.8.0"
+  }
+}

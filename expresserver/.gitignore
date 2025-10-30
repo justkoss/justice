@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.db-journal
+
+# Uploads and storage
+uploads/*
+!uploads/.gitkeep
+storage/*
+!storage/.gitkeep
+!storage/pending/.gitkeep
+!storage/stored/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Build files
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
