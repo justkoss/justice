@@ -1,814 +1,432 @@
 const { ipcRenderer } = require('electron');
-const fs = require('fs');
 const path = require('path');
 
 let documents = [];
-let rejectedDocuments = []; // Changed from modifications
 let currentDocument = null;
-let currentRejectedDoc = null; // Changed from currentModification
 let currentFilter = 'all';
+let watchedFolder = null;
 let currentTab = 'documents';
-let jwtToken = null;
-let serverUrl = null;
-let notificationsPollInterval = null;
+let rejectedDocuments = [];
+let currentRejectedDoc = null;
 let selectedNewFile = null;
-let isModificationLocked = false;
-let hasFileChanged = false;
+let reuploadedDocs = []; // Track locally which docs have been re-uploaded
+const fs = require('fs');
+const logFile = path.join(__dirname, 'app.log');
 
-// DOM Elements
-const selectFolderBtn = document.getElementById('selectFolderBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const documentList = document.getElementById('documentList');
-const modificationList = document.getElementById('modificationList');
-const documentViewer = document.getElementById('documentViewer');
-const noSelection = document.getElementById('noSelection');
-const processingForm = document.getElementById('processingForm');
-const modificationForm = document.getElementById('modificationForm');
-const noDocumentSelected = document.getElementById('noDocumentSelected');
-const pdfEmbed = document.getElementById('pdfEmbed');
-const bureau = document.getElementById('bureau');
-const bureauSearch = document.getElementById('bureauSearch');
-const registreType = document.getElementById('registreType');
-const documentYear = document.getElementById('documentYear');
-const registreNumber = document.getElementById('registreNumber');
-const acteNumber = document.getElementById('acteNumber');
-const saveBtn = document.getElementById('saveBtn');
-const statusBadge = document.getElementById('statusBadge');
-const currentFileName = document.getElementById('currentFileName');
-const watchedFolderDisplay = document.getElementById('watchedFolderDisplay');
-const filterTabs = document.querySelectorAll('.filter-tab');
-const sidebarTabs = document.querySelectorAll('.sidebar-tab');
-const syncBtn = document.getElementById('syncBtn');
-const syncStatus = document.getElementById('syncStatus');
-const syncAllBtn = document.getElementById('syncAllBtn');
-const syncAllStatus = document.getElementById('syncAllStatus');
-const panelTitle = document.getElementById('panelTitle');
-const reuploadBtn = document.getElementById('reuploadBtn');
-const languageSwitcher = document.getElementById('languageSwitcher');
+function logToFile(msg) {
+  const entry = `${new Date().toISOString()} - ${msg}\n`;
+  fs.appendFileSync(logFile, entry);
+  console.log(msg);
+}
+// Bureau list
+const bureaux = [
+  'Aïn Chock', 'Aïn Sebaâ', 'Al Fida', 'Anfa', 'Ben M\'sik',
+  'Essoukhour Assawda', 'Hay Hassani', 'Hay Mohammadi', 'Maârif',
+  'Mers Sultan', 'Moulay Rachid', 'Sbata', 'Sidi Belyout',
+  'Sidi Bernoussi', 'Sidi Moumen', 'Sidi Othman'
+];
 
-// Notifications elements
-const notificationsBtn = document.getElementById('notificationsBtn');
-const notificationBadge = document.getElementById('notificationBadge');
-const notificationsDropdown = document.getElementById('notificationsDropdown');
-const closeNotifications = document.getElementById('closeNotifications');
-const notificationsList = document.getElementById('notificationsList');
-
-// Modification form elements
-const modBureau = document.getElementById('modBureau');
-const modBureauSearch = document.getElementById('modBureauSearch');
-const modRegistreType = document.getElementById('modRegistreType');
-const modDocumentYear = document.getElementById('modDocumentYear');
-const modRegistreNumber = document.getElementById('modRegistreNumber');
-const modActeNumber = document.getElementById('modActeNumber');
-const saveModificationBtn = document.getElementById('saveModificationBtn');
+// Registre types
+const registreTypes = {
+  naissances: i18n.t('registreTypes.naissances'),
+  deces: i18n.t('registreTypes.deces'),
+  jugements: i18n.t('registreTypes.jugements'),
+  transcriptions: i18n.t('registreTypes.transcriptions'),
+  etrangers: i18n.t('registreTypes.etrangers')
+};
 
 // Initialize
-async function init() {
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('Application starting...');
+  
+  // Initialize i18n
   i18n.init();
-  updateLanguageSwitcher();
   
-  // Get JWT token and server URL
-  jwtToken = await ipcRenderer.invoke('get-jwt-token');
-  serverUrl = await ipcRenderer.invoke('get-server-url');
+  // Setup language switcher
+  setupLanguageSwitcher();
   
-  populateBureauDropdown();
-  populateRegistreTypeDropdown();
-  if (modBureau) {
-    populateModBureauDropdown();
-  }
-  if (modRegistreType) {
-    populateModRegistreTypeDropdown();
-  }
+  // Setup notifications
+  setupNotifications();
   
-  await loadDocuments();
-  await loadRejectedDocuments(); // Load from backend
-  
-  const watchedFolder = await ipcRenderer.invoke('get-watched-folder');
+  // Load watched folder
+  watchedFolder = await ipcRenderer.invoke('get-watched-folder');
   if (watchedFolder) {
-    updateWatchedFolderDisplay(watchedFolder);
+    displayWatchedFolder(watchedFolder);
   }
   
-  // Start polling for rejected documents every 30 seconds
-  startNotificationsPolling();
-}
-
-// Start polling for notifications
-function startNotificationsPolling() {
-  // Poll immediately
-  loadRejectedDocuments();
+  // Load documents
+  await loadDocuments();
   
-  // Then poll every 30 seconds
-  notificationsPollInterval = setInterval(() => {
-    loadRejectedDocuments();
-  }, 30000);
-}
+  // Load rejected documents for modifications tab
+  await loadRejectedDocuments();
+  
+  // Load reuploaded docs status
+  await loadReuploadedDocs();
+  
+  // Setup event listeners
+  setupEventListeners();
+  
+  // Initialize searchable selects
+  initializeSearchableSelects();
+  
+  console.log('Application initialized');
+});
 
-// Stop polling
-function stopNotificationsPolling() {
-  if (notificationsPollInterval) {
-    clearInterval(notificationsPollInterval);
-    notificationsPollInterval = null;
-  }
-}
-
-// ==============================================
-// I18N FUNCTIONS
-// ==============================================
-
-// Language Switcher functionality
-if (languageSwitcher) {
+// Setup Language Switcher
+function setupLanguageSwitcher() {
+  const languageSwitcher = document.getElementById('languageSwitcher');
+  const langCode = languageSwitcher.querySelector('.lang-code');
+  
+  // Set initial language display
+  langCode.textContent = i18n.getLanguage().toUpperCase();
+  
   languageSwitcher.addEventListener('click', () => {
     const currentLang = i18n.getLanguage();
     const newLang = currentLang === 'fr' ? 'ar' : 'fr';
     i18n.setLanguage(newLang);
-    updateLanguageSwitcher();
+    langCode.textContent = newLang.toUpperCase();
     
-    populateBureauDropdown();
-    populateRegistreTypeDropdown();
-    if (modBureau) {
-      populateModBureauDropdown();
+    // Re-render everything with new language
+    renderDocumentList();
+    renderModificationList();
+    if (currentDocument) {
+      showProcessingForm(currentDocument);
     }
-    if (modRegistreType) {
-      populateModRegistreTypeDropdown();
-    }
-    
-    if (currentTab === 'documents') {
-      renderDocuments();
-    } else {
-      renderRejectedDocuments();
+    if (currentRejectedDoc) {
+      showModificationForm(currentRejectedDoc);
     }
   });
 }
 
-// Notifications functionality
-if (notificationsBtn) {
-  notificationsBtn.addEventListener('click', () => {
-    toggleNotificationsDropdown();
+// Setup Notifications
+function setupNotifications() {
+  const notificationsBtn = document.getElementById('notificationsBtn');
+  const notificationsDropdown = document.getElementById('notificationsDropdown');
+  const closeNotifications = document.getElementById('closeNotifications');
+  const notificationBadge = document.getElementById('notificationBadge');
+  
+  // Toggle dropdown
+  notificationsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = notificationsDropdown.style.display === 'block';
+    notificationsDropdown.style.display = isVisible ? 'none' : 'block';
+    
+    if (!isVisible) {
+      updateNotificationsList();
+    }
   });
-}
-
-if (closeNotifications) {
+  
+  // Close dropdown
   closeNotifications.addEventListener('click', () => {
-    hideNotificationsDropdown();
+    notificationsDropdown.style.display = 'none';
   });
-}
-
-// Close notifications when clicking outside
-document.addEventListener('click', (e) => {
-  if (notificationsDropdown && 
-      notificationsDropdown.style.display === 'block' &&
-      !notificationsDropdown.contains(e.target) &&
-      !notificationsBtn.contains(e.target)) {
-    hideNotificationsDropdown();
-  }
-});
-
-function updateLanguageSwitcher() {
-  if (!languageSwitcher) return;
-  const lang = i18n.getLanguage();
-  const langCode = languageSwitcher.querySelector('.lang-code');
-  if (langCode) {
-    langCode.textContent = lang.toUpperCase();
-  }
-}
-
-// Get translated bureau list
-function getAllBureauxTranslated() {
-  return [
-    { key: 'ainchock', name: i18n.t('bureaux.ainchock') },
-    { key: 'ainsebaa', name: i18n.t('bureaux.ainsebaa') },
-    { key: 'alfida', name: i18n.t('bureaux.alfida') },
-    { key: 'anfa', name: i18n.t('bureaux.anfa') },
-    { key: 'benmsik', name: i18n.t('bureaux.benmsik') },
-    { key: 'essoukhour', name: i18n.t('bureaux.essoukhour') },
-    { key: 'hayhassani', name: i18n.t('bureaux.hayhassani') },
-    { key: 'haymohammadi', name: i18n.t('bureaux.haymohammadi') },
-    { key: 'maarif', name: i18n.t('bureaux.maarif') },
-    { key: 'merssultan', name: i18n.t('bureaux.merssultan') },
-    { key: 'moulayrachid', name: i18n.t('bureaux.moulayrachid') },
-    { key: 'sbata', name: i18n.t('bureaux.sbata') },
-    { key: 'sidibelyout', name: i18n.t('bureaux.sidibelyout') },
-    { key: 'sidibernoussi', name: i18n.t('bureaux.sidibernoussi') },
-    { key: 'sidimoumen', name: i18n.t('bureaux.sidimoumen') },
-    { key: 'sidiothman', name: i18n.t('bureaux.sidiothman') }
-  ];
-}
-
-// Get translated registre types
-function getAllRegistreTypesTranslated() {
-  return [
-    { key: 'naissances', name: i18n.t('registreTypes.naissances') },
-    { key: 'deces', name: i18n.t('registreTypes.deces') },
-    { key: 'jugements', name: i18n.t('registreTypes.jugements') },
-    { key: 'transcriptions', name: i18n.t('registreTypes.transcriptions') },
-    { key: 'etrangers', name: i18n.t('registreTypes.etrangers') }
-  ];
-}
-
-// Populate bureau dropdown with translations
-function populateBureauDropdown(searchTerm = '', selectedKey = '') {
-  if (!bureau) return;
   
-  const bureaux = getAllBureauxTranslated();
-  const filtered = bureaux.filter(b => 
-    b.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  bureau.innerHTML = '';
-  
-  filtered.forEach(b => {
-    const option = document.createElement('option');
-    option.value = b.key;
-    option.textContent = b.name;
-    if (b.key === selectedKey) {
-      option.selected = true;
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!notificationsBtn.contains(e.target) && !notificationsDropdown.contains(e.target)) {
+      notificationsDropdown.style.display = 'none';
     }
-    bureau.appendChild(option);
   });
   
-  if (searchTerm && !bureaux.some(b => b.name.toLowerCase() === searchTerm.toLowerCase())) {
-    const newOption = document.createElement('option');
-    newOption.value = searchTerm;
-    newOption.textContent = `➕ ${searchTerm}`;
-    newOption.className = 'add-new-option';
-    bureau.insertBefore(newOption, bureau.firstChild);
+  // Update badge count
+  updateNotificationBadge();
+}
+
+async function updateNotificationsList() {
+  const notificationsList = document.getElementById('notificationsList');
+  
+  // Get rejected documents count (excluding reuploaded ones)
+  const activeRejectedDocs = rejectedDocuments.filter(doc => !isDocumentReuploaded(doc.id));
+  const rejectedCount = activeRejectedDocs.length;
+  
+  if (rejectedCount === 0) {
+    notificationsList.innerHTML = `
+      <div class="empty-notifications">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <p data-i18n="notifications.empty">${i18n.t('notifications.empty')}</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Show notifications
+  notificationsList.innerHTML = activeRejectedDocs.map(doc => `
+    <div class="notification-item unread" data-doc-id="${doc.id}">
+      <div class="notification-header">
+        <div class="notification-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+        </div>
+        <div class="notification-content">
+          <div class="notification-title">${i18n.t('notifications.newModification')}</div>
+          <div class="notification-message">${doc.original_filename}</div>
+          <div class="notification-time">${formatDate(doc.reviewed_at)}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  // Add click handlers
+  notificationsList.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const docId = parseInt(item.dataset.docId);
+      const doc = rejectedDocuments.find(d => d.id === docId);
+      if (doc && !isDocumentReuploaded(doc.id)) {
+        // Switch to modifications tab
+        switchTab('modifications');
+        // Show the document
+        showModificationForm(doc);
+        // Close dropdown
+        document.getElementById('notificationsDropdown').style.display = 'none';
+      }
+    });
+  });
+}
+
+function updateNotificationBadge() {
+  const notificationBadge = document.getElementById('notificationBadge');
+  // Only count documents that haven't been reuploaded yet
+  const activeCount = rejectedDocuments.filter(doc => !isDocumentReuploaded(doc.id)).length;
+  
+  if (activeCount > 0) {
+    notificationBadge.textContent = activeCount;
+    notificationBadge.style.display = 'flex';
+  } else {
+    notificationBadge.style.display = 'none';
   }
 }
 
-// Populate registre type dropdown with translations
-function populateRegistreTypeDropdown(selectedKey = '') {
-  if (!registreType) return;
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
   
-  const types = getAllRegistreTypesTranslated();
-  registreType.innerHTML = `<option value="">${i18n.t('processing.selectType')}</option>`;
+  if (diffMins < 1) return i18n.getLanguage() === 'fr' ? 'À l\'instant' : 'الآن';
+  if (diffMins < 60) return `${diffMins} ${i18n.getLanguage() === 'fr' ? 'min' : 'د'}`;
+  if (diffHours < 24) return `${diffHours} ${i18n.getLanguage() === 'fr' ? 'h' : 'س'}`;
+  if (diffDays < 7) return `${diffDays} ${i18n.getLanguage() === 'fr' ? 'j' : 'ي'}`;
   
-  types.forEach(type => {
-    const option = document.createElement('option');
-    option.value = type.key;
-    option.textContent = type.name;
-    if (type.key === selectedKey) {
-      option.selected = true;
+  return date.toLocaleDateString(i18n.getLanguage() === 'fr' ? 'fr-FR' : 'ar-MA');
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+  // Select folder button
+  document.getElementById('selectFolderBtn').addEventListener('click', async () => {
+    const folder = await ipcRenderer.invoke('select-folder');
+    if (folder) {
+      watchedFolder = folder;
+      displayWatchedFolder(folder);
+      await loadDocuments();
     }
-    registreType.appendChild(option);
   });
+  
+  // Logout button
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await ipcRenderer.invoke('logout');
+  });
+  
+  // Tab switching
+  document.querySelectorAll('.sidebar-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      switchTab(tabName);
+    });
+  });
+  
+  // Filter tabs
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      currentFilter = tab.dataset.filter;
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderDocumentList();
+    });
+  });
+  
+  // Save button
+  document.getElementById('saveBtn').addEventListener('click', saveDocument);
+  
+  // Sync button
+  document.getElementById('syncBtn').addEventListener('click', syncDocument);
+  
+  // Sync All button
+  document.getElementById('syncAllBtn').addEventListener('click', syncAllProcessedDocuments);
+  
+  // Reupload button
+  document.getElementById('reuploadBtn').addEventListener('click', selectNewFileForReupload);
+  
+  // Save modification button
+  document.getElementById('saveModificationBtn').addEventListener('click', saveModification);
 }
-
-// Similar functions for modification form
-function populateModBureauDropdown(searchTerm = '', selectedKey = '') {
-  if (!modBureau) return;
-  
-  const bureaux = getAllBureauxTranslated();
-  const filtered = bureaux.filter(b => 
-    b.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  modBureau.innerHTML = '';
-  
-  filtered.forEach(b => {
-    const option = document.createElement('option');
-    option.value = b.key;
-    option.textContent = b.name;
-    if (b.key === selectedKey) {
-      option.selected = true;
-    }
-    modBureau.appendChild(option);
-  });
-  
-  if (searchTerm && !bureaux.some(b => b.name.toLowerCase() === searchTerm.toLowerCase())) {
-    const newOption = document.createElement('option');
-    newOption.value = searchTerm;
-    newOption.textContent = `➕ ${searchTerm}`;
-    newOption.className = 'add-new-option';
-    modBureau.insertBefore(newOption, modBureau.firstChild);
-  }
-}
-
-function populateModRegistreTypeDropdown(selectedKey = '') {
-  if (!modRegistreType) return;
-  
-  const types = getAllRegistreTypesTranslated();
-  modRegistreType.innerHTML = `<option value="">${i18n.t('processing.selectType')}</option>`;
-  
-  types.forEach(type => {
-    const option = document.createElement('option');
-    option.value = type.key;
-    option.textContent = type.name;
-    if (type.key === selectedKey) {
-      option.selected = true;
-    }
-    modRegistreType.appendChild(option);
-  });
-}
-
-// Bureau search functionality
-if (bureauSearch) {
-  bureauSearch.addEventListener('input', (e) => {
-    populateBureauDropdown(e.target.value);
-  });
-  
-  bureauSearch.addEventListener('focus', () => {
-    bureau.size = 8;
-    bureau.style.display = 'block';
-  });
-  
-  bureauSearch.addEventListener('blur', () => {
-    setTimeout(() => {
-      bureau.size = 1;
-    }, 200);
-  });
-  
-  bureau.addEventListener('change', () => {
-    const selected = bureau.options[bureau.selectedIndex];
-    bureauSearch.value = selected.textContent;
-  });
-}
-
-if (modBureauSearch) {
-  modBureauSearch.addEventListener('input', (e) => {
-    populateModBureauDropdown(e.target.value);
-  });
-  
-  modBureauSearch.addEventListener('focus', () => {
-    modBureau.size = 8;
-    modBureau.style.display = 'block';
-  });
-  
-  modBureauSearch.addEventListener('blur', () => {
-    setTimeout(() => {
-      modBureau.size = 1;
-    }, 200);
-  });
-  
-  modBureau.addEventListener('change', () => {
-    const selected = modBureau.options[modBureau.selectedIndex];
-    modBureauSearch.value = selected.textContent;
-  });
-}
-
-// Tab switching
-sidebarTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    const tabName = tab.dataset.tab;
-    switchTab(tabName);
-  });
-});
 
 function switchTab(tabName) {
   currentTab = tabName;
   
   // Update tab buttons
-  sidebarTabs.forEach(t => t.classList.remove('active'));
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+  document.querySelectorAll('.sidebar-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabName);
+  });
   
   // Update tab content
-  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-  document.getElementById(`${tabName}Tab`).classList.add('active');
-  
-  // Clear selection and update panel
-  clearSelection();
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
   
   if (tabName === 'documents') {
-    panelTitle.textContent = i18n.t('processing.title');
-  } else {
-    panelTitle.textContent = 'Demande de Modification';
+    document.getElementById('documentsTab').classList.add('active');
+    renderDocumentList();
+  } else if (tabName === 'modifications') {
+    document.getElementById('modificationsTab').classList.add('active');
+    renderModificationList();
   }
+  
+  // Hide both forms
+  hideAllForms();
 }
 
-// Sync functionality with JWT token
-async function syncDocument(doc) {
-  try {
-    showSyncStatus('Préparation de la synchronisation...', 'loading');
-    syncBtn.disabled = true;
-    
-    const fileBuffer = fs.readFileSync(doc.filepath);
-    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
-    
-    const formData = new FormData();
-    formData.append('file', blob, doc.filename);
-    formData.append('metadata', JSON.stringify({
-      filename: doc.filename,
-      bureau: doc.bureau,
-      acteNumber: doc.acte_number,
-      registreNumber: doc.registre_number,
-      year: doc.year,
-      registreType: doc.registre_type,
-      processedAt: new Date().toISOString(),
-      desktopDocumentId: doc.id
-    }));
-    
-    showSyncStatus('Téléchargement vers le serveur...', 'loading');
-    
-    // Include JWT token in request
-    const response = await fetch(`${serverUrl}/api/sync`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwtToken}`
-      },
-      body: formData
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Le serveur a répondu avec ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    showSyncStatus('Synchronisation réussie ! Suppression du fichier local...', 'loading');
-    
-    await ipcRenderer.invoke('delete-document', doc.id, doc.filepath);
-    
-    await loadDocuments();
-    clearSelection();
-    
-    showSyncStatus('✓ Document synchronisé et supprimé', 'success');
-    
-    setTimeout(() => {
-      showSyncStatus('', 'hidden');
-    }, 3000);
-    
-  } catch (error) {
-    console.error('Erreur de synchronisation:', error);
-    showSyncStatus(`✗ Échec de la synchronisation : ${error.message}`, 'error');
-  } finally {
-    syncBtn.disabled = false;
-  }
+function displayWatchedFolder(folder) {
+  const display = document.getElementById('watchedFolderDisplay');
+  display.style.display = 'flex';
+  display.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span>${folder}</span>
+  `;
 }
 
-async function syncAllDocuments() {
-  try {
-    const processedDocs = documents.filter(doc => doc.processed === 1);
-    
-    if (processedDocs.length === 0) {
-      showSyncAllStatus(i18n.t('sync.noProcessed'), 'warning');
-      setTimeout(() => {
-        showSyncAllStatus('', 'hidden');
-      }, 3000);
-      return;
-    }
-    
-    syncAllBtn.disabled = true;
-    let successCount = 0;
-    let failCount = 0;
-    const total = processedDocs.length;
-    
-    showSyncAllStatus(i18n.t('sync.syncing'), 'loading');
-    
-    for (let i = 0; i < processedDocs.length; i++) {
-      const doc = processedDocs[i];
-      const current = i + 1;
-      
-      const progressMsg = i18n.t('sync.progress')
-        .replace('{current}', current)
-        .replace('{total}', total);
-      showSyncAllStatus(progressMsg, 'loading');
-      
-      try {
-        const fileBuffer = fs.readFileSync(doc.filepath);
-        const blob = new Blob([fileBuffer], { type: 'application/pdf' });
-        
-        const formData = new FormData();
-        formData.append('file', blob, doc.filename);
-        formData.append('metadata', JSON.stringify({
-          filename: doc.filename,
-          bureau: doc.bureau,
-          acteNumber: doc.acte_number,
-          registreNumber: doc.registre_number,
-          year: doc.year,
-          registreType: doc.registre_type,
-          processedAt: new Date().toISOString(),
-          desktopDocumentId: doc.id
-        }));
-        
-        // Include JWT token
-        const response = await fetch(`${serverUrl}/api/sync`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${jwtToken}`
-          },
-          body: formData
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Server responded with ${response.status}`);
-        }
-        
-        await response.json();
-        await ipcRenderer.invoke('delete-document', doc.id, doc.filepath);
-        
-        successCount++;
-        
-      } catch (error) {
-        console.error(`Failed to sync ${doc.filename}:`, error);
-        failCount++;
-      }
-    }
-    
-    await loadDocuments();
-    clearSelection();
-    
-    if (failCount === 0) {
-      const successMsg = i18n.t('sync.success').replace('{count}', successCount);
-      showSyncAllStatus(successMsg, 'success');
-    } else {
-      const partialMsg = i18n.t('sync.partial')
-        .replace('{success}', successCount)
-        .replace('{failed}', failCount);
-      showSyncAllStatus(partialMsg, 'warning');
-    }
-    
-    setTimeout(() => {
-      showSyncAllStatus('', 'hidden');
-    }, 5000);
-    
-  } catch (error) {
-    console.error('Sync all error:', error);
-    showSyncAllStatus(i18n.t('sync.error'), 'error');
-    setTimeout(() => {
-      showSyncAllStatus('', 'hidden');
-    }, 3000);
-  } finally {
-    syncAllBtn.disabled = false;
-  }
-}
-
-function showSyncAllStatus(message, type) {
-  syncAllStatus.textContent = message;
-  syncAllStatus.className = `sync-all-status sync-status-${type}`;
-  syncAllStatus.style.display = message ? 'block' : 'none';
-}
-
-function showSyncStatus(message, type) {
-  syncStatus.textContent = message;
-  syncStatus.className = `sync-status sync-status-${type}`;
-  syncStatus.style.display = message ? 'flex' : 'none';
-}
-
-// Event Listeners
-selectFolderBtn.addEventListener('click', async () => {
-  const folderPath = await ipcRenderer.invoke('select-folder');
-  if (folderPath) {
-    updateWatchedFolderDisplay(folderPath);
-    await loadDocuments();
-  }
-});
-
-logoutBtn.addEventListener('click', async () => {
-  const confirmed = confirm('Êtes-vous sûr de vouloir vous déconnecter ?');
-  if (confirmed) {
-    stopNotificationsPolling();
-    await ipcRenderer.invoke('logout');
-  }
-});
-
-saveBtn.addEventListener('click', async () => {
-  if (!currentDocument) return;
-  
-  const bureauVal = bureau.value;
-  const acteNum = acteNumber.value.trim();
-  const registreNum = registreNumber.value.trim();
-  const year = parseInt(documentYear.value);
-  const regType = registreType.value;
-  
-  if (!bureauVal || !acteNum || !registreNum || !year || !regType) {
-    alert('Veuillez remplir tous les champs');
-    return;
-  }
-  
-  const updated = await ipcRenderer.invoke('update-document', currentDocument.id, {
-    bureau: bureauVal,
-    acteNumber: acteNum,
-    registreNumber: registreNum,
-    year: year,
-    registreType: regType
-  });
-  
-  const index = documents.findIndex(d => d.id === currentDocument.id);
-  if (index !== -1) {
-    documents[index] = updated;
-  }
-  
-  currentDocument = updated;
-  updateStatusBadge(true);
-  renderDocuments();
-  
-  const saveBtnSpan = saveBtn.querySelector('span');
-  if (saveBtnSpan) {
-    saveBtnSpan.textContent = 'Enregistré !';
-  }
-  saveBtn.style.background = '#10b981';
-  setTimeout(() => {
-    saveBtn.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      <span data-i18n="processing.save">${i18n.t('processing.save')}</span>
-    `;
-    saveBtn.style.background = '';
-  }, 2000);
-});
-
-filterTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    filterTabs.forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    currentFilter = tab.dataset.filter;
-    renderDocuments();
-  });
-});
-
-syncBtn.addEventListener('click', async () => {
-  if (!currentDocument) return;
-  
-  if (currentDocument.processed !== 1) {
-    showSyncStatus('Veuillez traiter le document avant de synchroniser', 'error');
-    return;
-  }
-  
-  await syncDocument(currentDocument);
-});
-
-// Sync All Button
-if (syncAllBtn) {
-  syncAllBtn.addEventListener('click', async () => {
-    await syncAllDocuments();
-  });
-}
-
-// Reupload button - resync rejected document with new file
-if (reuploadBtn) {
-  reuploadBtn.addEventListener('click', async () => {
-    if (!currentRejectedDoc || isModificationLocked) return;
-    
-    const newFilePath = await ipcRenderer.invoke('select-file-for-reupload');
-    if (!newFilePath) return;
-    
-    // Store the new file path
-    selectedNewFile = newFilePath;
-    hasFileChanged = true;
-    
-    // Update viewer to show new file immediately
-    pdfEmbed.src = `file://${newFilePath}#toolbar=0`;
-    
-    // Update button to show file was selected
-    reuploadBtn.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      <span>${i18n.t('processing.fileSelected') || 'Fichier sélectionné ✓'}</span>
-    `;
-    reuploadBtn.classList.add('btn-success');
-    reuploadBtn.disabled = true; // Disable to prevent multiple selections
-    
-    // Enable the save button
-    if (saveModificationBtn) {
-      saveModificationBtn.disabled = false;
-      saveModificationBtn.classList.remove('opacity-50');
-    }
-    
-    showSyncStatus('✓ ' + (i18n.t('processing.newFileSelected') || 'Nouveau fichier sélectionné. Vérifiez les métadonnées et envoyez.'), 'success');
-  });
-}
-
-// IPC Listeners
-ipcRenderer.on('document-added', async (event, doc) => {
-  console.log('📄 Document ajouté:', doc.filename);
-  await loadDocuments();
-});
-
-ipcRenderer.on('document-removed', async (event, filepath) => {
-  console.log('🗑️  Document supprimé:', filepath);
-  await loadDocuments();
-  if (currentDocument && currentDocument.filepath === filepath) {
-    clearSelection();
-  }
-});
-
-// Functions
+// Load Documents
 async function loadDocuments() {
   documents = await ipcRenderer.invoke('get-documents');
-  renderDocuments();
+  renderDocumentList();
 }
 
-// Load rejected documents from backend
+// Load Rejected Documents
 async function loadRejectedDocuments() {
   const result = await ipcRenderer.invoke('fetch-rejected-documents');
   if (result.success) {
-    rejectedDocuments = result.documents;
-    renderRejectedDocuments();
+    rejectedDocuments = result.documents || [];
+    renderModificationList();
     updateNotificationBadge();
-  } else {
-    console.error('Failed to load rejected documents:', result.message);
+    updateNotificationsList();
   }
 }
 
-function updateWatchedFolderDisplay(folderPath) {
-  watchedFolderDisplay.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"></circle>
-      <polyline points="12 6 12 12 16 14"></polyline>
-    </svg>
-    <span>Surveillance : ${folderPath}</span>
-  `;
-  watchedFolderDisplay.style.display = 'flex';
+// Load reuploaded docs status
+async function loadReuploadedDocs() {
+  reuploadedDocs = await ipcRenderer.invoke('get-reuploaded-docs') || [];
 }
 
-function updateFilterCounts() {
+// Check if document has been reuploaded
+function isDocumentReuploaded(serverDocId) {
+  return reuploadedDocs.some(doc => doc.server_doc_id === serverDocId);
+}
+
+// Render Document List
+function renderDocumentList() {
+  const list = document.getElementById('documentList');
+  
+  let filtered = documents;
+  if (currentFilter === 'processed') {
+    filtered = documents.filter(d => d.processed === 1);
+  } else if (currentFilter === 'unprocessed') {
+    filtered = documents.filter(d => d.processed === 0);
+  }
+  
+  // Update filter counts
   const allCount = documents.length;
-  const processedCount = documents.filter(doc => doc.processed === 1).length;
-  const unprocessedCount = documents.filter(doc => doc.processed === 0).length;
+  const processedCount = documents.filter(d => d.processed === 1).length;
+  const unprocessedCount = documents.filter(d => d.processed === 0).length;
   
-  filterTabs.forEach(tab => {
+  document.querySelectorAll('.filter-tab').forEach(tab => {
     const filter = tab.dataset.filter;
-    let count = 0;
+    const badge = tab.querySelector('.count-badge');
     
-    if (filter === 'all') count = allCount;
-    else if (filter === 'processed') count = processedCount;
-    else if (filter === 'unprocessed') count = unprocessedCount;
-    
-    let badge = tab.querySelector('.count-badge');
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.className = 'count-badge';
-      tab.appendChild(badge);
+    if (badge) {
+      if (filter === 'all') badge.textContent = allCount;
+      else if (filter === 'processed') badge.textContent = processedCount;
+      else if (filter === 'unprocessed') badge.textContent = unprocessedCount;
+    } else {
+      const count = filter === 'all' ? allCount : 
+                    filter === 'processed' ? processedCount : unprocessedCount;
+      const countBadge = document.createElement('span');
+      countBadge.className = 'count-badge';
+      countBadge.textContent = count;
+      tab.appendChild(countBadge);
     }
-    badge.textContent = count;
-  });
-}
-
-function renderDocuments() {
-  updateFilterCounts();
-  
-  const filtered = documents.filter(doc => {
-    if (currentFilter === 'processed') return doc.processed === 1;
-    if (currentFilter === 'unprocessed') return doc.processed === 0;
-    return true;
   });
   
   if (filtered.length === 0) {
-    let emptyMessage = i18n.t('documentList.empty');
-    
-    documentList.innerHTML = `
+    list.innerHTML = `
       <div class="empty-state">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
         </svg>
-        <p>${emptyMessage}</p>
+        <p data-i18n="documentList.empty">${i18n.t('documentList.empty')}</p>
+        <small data-i18n="documentList.emptyHint">${i18n.t('documentList.emptyHint')}</small>
       </div>
     `;
     return;
   }
   
-  documentList.innerHTML = filtered.map(doc => {
-    let displayName = doc.filename;
-    if (doc.acte_number && doc.registre_number) {
-      displayName = `Acte ${doc.acte_number} - Reg. ${doc.registre_number}`;
-    }
-    
-    let bureauDisplay = doc.bureau || '';
-    if (doc.bureau) {
-      const bureauObj = getAllBureauxTranslated().find(b => b.key === doc.bureau);
-      bureauDisplay = bureauObj ? bureauObj.name : doc.bureau;
-    }
-    
-    const processedText = doc.processed ? i18n.t('processing.status.processed') : i18n.t('processing.status.unprocessed');
-    const processedIcon = doc.processed ? '✓' : '○';
+  list.innerHTML = filtered.map(doc => {
+    const isActive = currentDocument && currentDocument.id === doc.id;
+    const statusClass = doc.processed ? 'processed' : 'unprocessed';
+    const statusText = doc.processed ? 
+      i18n.t('processing.status.processed') : 
+      i18n.t('processing.status.unprocessed');
     
     return `
-    <div class="document-item ${doc.processed ? 'processed' : 'unprocessed'} ${currentDocument?.id === doc.id ? 'active' : ''}" 
-         data-id="${doc.id}">
-      <div class="doc-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-        </svg>
-      </div>
-      <div class="doc-info">
-        <div class="doc-name">${displayName}</div>
-        <div class="doc-meta">
-          ${bureauDisplay ? `<span class="doc-bureau">${bureauDisplay}</span>` : ''}
-          ${doc.year ? `<span class="doc-year">${doc.year}</span>` : ''}
-          <span class="doc-status ${doc.processed ? 'status-processed' : 'status-unprocessed'}">
-            ${processedIcon} ${processedText}
-          </span>
+      <div class="document-item ${statusClass} ${isActive ? 'active' : ''}" data-id="${doc.id}">
+        <div class="doc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-name">${doc.filename}</div>
+          <div class="doc-meta">
+            ${doc.year ? `<span class="doc-year">${doc.year}</span>` : ''}
+            ${doc.bureau ? `<span class="doc-bureau">${doc.bureau}</span>` : ''}
+            <span class="status-${statusClass}">${statusText}</span>
+          </div>
         </div>
       </div>
-    </div>
-  `;
+    `;
   }).join('');
   
-  document.querySelectorAll('.document-item').forEach(item => {
+  // Add click handlers
+  list.querySelectorAll('.document-item').forEach(item => {
     item.addEventListener('click', () => {
       const id = parseInt(item.dataset.id);
       const doc = documents.find(d => d.id === id);
-      selectDocument(doc);
+      if (doc) {
+        currentDocument = doc;
+        showProcessingForm(doc);
+        renderDocumentList(); // Re-render to update active state
+      }
     });
   });
 }
 
-function renderRejectedDocuments() {
+// Render Modification List
+function renderModificationList() {
+  const list = document.getElementById('modificationList');
+  
   if (rejectedDocuments.length === 0) {
-    modificationList.innerHTML = `
+    list.innerHTML = `
       <div class="empty-state">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -821,387 +439,636 @@ function renderRejectedDocuments() {
     return;
   }
   
-  modificationList.innerHTML = rejectedDocuments.map(doc => `
-    <div class="document-item modification-item ${currentRejectedDoc?.id === doc.id ? 'active' : ''}" 
-         data-id="${doc.id}">
-      <div class="doc-icon error-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      </div>
-      <div class="doc-info">
-        <div class="doc-name">${doc.original_filename}</div>
-        <div class="doc-meta">
-          <span class="error-badge">${doc.rejection_error_type || 'Erreur'}</span>
+  list.innerHTML = rejectedDocuments.map(doc => {
+    const isActive = currentRejectedDoc && currentRejectedDoc.id === doc.id;
+    const isReuploaded = isDocumentReuploaded(doc.id);
+    const disabledClass = isReuploaded ? 'disabled' : '';
+    const statusBadge = isReuploaded ? 
+      `<span class="badge badge-pending">${i18n.t('modification.awaitingReview')}</span>` : 
+      `<span class="error-badge">${i18n.t('processing.errorType')}</span>`;
+    
+    return `
+      <div class="document-item modification-item ${isActive && !isReuploaded ? 'active' : ''} ${disabledClass}" 
+           data-id="${doc.id}" 
+           ${isReuploaded ? 'data-disabled="true"' : ''}>
+        <div class="doc-icon error-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            ${isReuploaded ? `
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            ` : `
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <circle cx="12" cy="17" r="0.5"></circle>
+            `}
+          </svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-name">${doc.original_filename}</div>
+          <div class="doc-meta">
+            ${doc.year ? `<span class="doc-year">${doc.year}</span>` : ''}
+            ${doc.bureau ? `<span class="doc-bureau">${doc.bureau}</span>` : ''}
+            ${statusBadge}
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
   
-  document.querySelectorAll('.modification-item').forEach(item => {
+  // Add click handlers
+  list.querySelectorAll('.document-item').forEach(item => {
     item.addEventListener('click', () => {
+      // Check if disabled
+      if (item.dataset.disabled === 'true') {
+        return; // Don't allow clicking on disabled items
+      }
+      
       const id = parseInt(item.dataset.id);
       const doc = rejectedDocuments.find(d => d.id === id);
-      selectRejectedDocument(doc);
-    });
-  });
-}
-
-// ====================================
-// NOTIFICATIONS FUNCTIONS
-// ====================================
-
-function updateNotificationBadge() {
-  const count = rejectedDocuments.length;
-  if (count > 0) {
-    notificationBadge.textContent = count;
-    notificationBadge.style.display = 'flex';
-  } else {
-    notificationBadge.style.display = 'none';
-  }
-}
-
-function toggleNotificationsDropdown() {
-  if (notificationsDropdown.style.display === 'block') {
-    hideNotificationsDropdown();
-  } else {
-    showNotificationsDropdown();
-  }
-}
-
-function showNotificationsDropdown() {
-  renderNotifications();
-  notificationsDropdown.style.display = 'block';
-}
-
-function hideNotificationsDropdown() {
-  notificationsDropdown.style.display = 'none';
-}
-
-function renderNotifications() {
-  if (rejectedDocuments.length === 0) {
-    notificationsList.innerHTML = `
-      <div style="text-align: center; padding: 2rem; color: #718096;">
-        <p>${i18n.t('notifications.empty')}</p>
-      </div>
-    `;
-    return;
-  }
-  
-  notificationsList.innerHTML = rejectedDocuments.map(doc => `
-    <div class="notification-item" data-doc-id="${doc.id}">
-      <div class="notification-icon error-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      </div>
-      <div class="notification-content">
-        <div class="notification-title">${i18n.t('notifications.newModification')}</div>
-        <div class="notification-message">${doc.original_filename} - ${doc.rejection_error_type || 'Erreur'}</div>
-        <div class="notification-time">${doc.rejection_reason || ''}</div>
-      </div>
-    </div>
-  `).join('');
-  
-  // Add click handlers to notifications
-  document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const docId = parseInt(item.dataset.docId);
-      const doc = rejectedDocuments.find(d => d.id === docId);
       if (doc) {
-        switchTab('modifications');
-        selectRejectedDocument(doc);
-        hideNotificationsDropdown();
+        currentRejectedDoc = doc;
+        selectedNewFile = null; // Reset selected file
+        showModificationForm(doc);
+        renderModificationList(); // Re-render to update active state
       }
     });
   });
 }
 
-function selectDocument(doc) {
-  currentDocument = doc;
-  currentRejectedDoc = null;
+// Show Processing Form
+function showProcessingForm(doc) {
+  // Hide other forms
+  document.getElementById('modificationForm').style.display = 'none';
+  document.getElementById('noDocumentSelected').style.display = 'none';
   
-  noSelection.style.display = 'none';
-  documentViewer.style.display = 'flex';
-  pdfEmbed.src = `file://${doc.filepath}#toolbar=0`;
+  // Show processing form
+  const form = document.getElementById('processingForm');
+  form.style.display = 'flex';
   
-  noDocumentSelected.style.display = 'none';
-  processingForm.style.display = 'flex';
-  if (modificationForm) modificationForm.style.display = 'none';
+  // Update current file name
+  document.getElementById('currentFileName').textContent = doc.filename;
   
-  currentFileName.textContent = doc.filename;
+  // Populate form fields
+  document.getElementById('bureau').value = doc.bureau || '';
+  document.getElementById('registreType').value = doc.registre_type || '';
+  document.getElementById('documentYear').value = doc.year || '';
+  document.getElementById('registreNumber').value = doc.registre_number || '';
+  document.getElementById('acteNumber').value = doc.acte_number || '';
   
-  if (bureauSearch) {
-    const bureauObj = getAllBureauxTranslated().find(b => b.key === doc.bureau);
-    bureauSearch.value = bureauObj ? bureauObj.name : (doc.bureau || '');
+  // Update status badge
+  const statusBadge = document.getElementById('statusBadge');
+  if (doc.processed) {
+    statusBadge.className = 'badge badge-processed';
+    statusBadge.setAttribute('data-i18n', 'processing.status.processed');
+    statusBadge.textContent = i18n.t('processing.status.processed');
+  } else {
+    statusBadge.className = 'badge badge-unprocessed';
+    statusBadge.setAttribute('data-i18n', 'processing.status.unprocessed');
+    statusBadge.textContent = i18n.t('processing.status.unprocessed');
   }
-  populateBureauDropdown('', doc.bureau);
   
-  acteNumber.value = doc.acte_number || '';
-  registreNumber.value = doc.registre_number || '';
-  documentYear.value = doc.year || '';
+  // Update sync button state
+  const syncBtn = document.getElementById('syncBtn');
+  syncBtn.disabled = !doc.processed;
   
-  populateRegistreTypeDropdown(doc.registre_type);
-  
-  updateStatusBadge(doc.processed === 1);
-  
-  renderDocuments();
+  // Show document
+  showDocument(doc.filepath);
 }
 
-async function selectRejectedDocument(doc) {
-  currentRejectedDoc = doc;
-  currentDocument = null;
+// Show Modification Form
+async function showModificationForm(doc) {
+  // Hide other forms
+  document.getElementById('processingForm').style.display = 'none';
+  document.getElementById('noDocumentSelected').style.display = 'none';
   
-  // Reset state for new document
+  // Show modification form
+  const form = document.getElementById('modificationForm');
+  form.style.display = 'flex';
+  
+  // Reset selected file
   selectedNewFile = null;
-  isModificationLocked = false;
-  hasFileChanged = false;
   
-  // Download the file if not already downloaded
-  const downloadResult = await ipcRenderer.invoke('download-rejected-document', doc.id);
+  // Update current file name
+  document.getElementById('modFileName').textContent = doc.original_filename;
   
-  if (!downloadResult.success) {
-    alert('Erreur lors du téléchargement du document: ' + downloadResult.message);
+  // Display error information
+  document.getElementById('errorType').textContent = doc.rejection_error_type || i18n.t('processing.errorType');
+  document.getElementById('agentMessage').textContent = doc.rejection_reason || '';
+  // logToFile('doc :'+ JSON.stringify(doc));
+  // Populate metadata fields
+  document.getElementById('modBureau').value = doc.bureau || '';
+  document.getElementById('modBureauSearch').value = doc.bureau || '';
+  document.getElementById('modRegistreType').value = doc.registre_type || '';
+  document.getElementById('modDocumentYear').value = doc.year || '';
+  document.getElementById('modRegistreNumber').value = doc.registre_number || '';
+  document.getElementById('modActeNumber').value = doc.acte_number || '';
+  
+  // Reset button states
+  const reuploadBtn = document.getElementById('reuploadBtn');
+  const saveBtn = document.getElementById('saveModificationBtn');
+  
+  reuploadBtn.disabled = false;
+  reuploadBtn.classList.remove('btn-success');
+  reuploadBtn.querySelector('span').setAttribute('data-i18n', 'processing.selectNewFile');
+  reuploadBtn.querySelector('span').textContent = i18n.t('processing.selectNewFile');
+  
+  saveBtn.disabled = true;
+  saveBtn.classList.add('opacity-50');
+  
+  // Download and display document
+  const result = await ipcRenderer.invoke('download-rejected-document', doc.id);
+  if (result.success) {
+    showDocument(result.filepath);
+  } else {
+    console.error('Failed to download document:', result.message);
+  }
+}
+
+// Select New File for Reupload
+async function selectNewFileForReupload() {
+  const filePath = await ipcRenderer.invoke('select-file-for-reupload');
+  
+  if (filePath) {
+    selectedNewFile = filePath;
+    
+    // Update button to show success
+    const reuploadBtn = document.getElementById('reuploadBtn');
+    reuploadBtn.classList.add('btn-success');
+    reuploadBtn.querySelector('span').textContent = i18n.t('processing.fileSelected');
+    
+    // Enable save button
+    const saveBtn = document.getElementById('saveModificationBtn');
+    saveBtn.disabled = false;
+    saveBtn.classList.remove('opacity-50');
+    
+    // Show the new file in viewer
+    showDocument(filePath);
+    
+    // Show info message
+    showSyncStatus(i18n.t('processing.newFileSelected'), 'success');
+  }
+}
+
+// Save Modification
+async function saveModification() {
+  if (!selectedNewFile) {
+    alert(i18n.t('processing.mustSelectNewFile'));
     return;
   }
   
-  noSelection.style.display = 'none';
-  documentViewer.style.display = 'flex';
-  pdfEmbed.src = `file://${downloadResult.filepath}#toolbar=0`;
-  
-  noDocumentSelected.style.display = 'none';
-  processingForm.style.display = 'none';
-  if (modificationForm) modificationForm.style.display = 'flex';
-  
-  // Reset buttons
-  reuploadBtn.disabled = false;
-  reuploadBtn.classList.remove('btn-success');
-  reuploadBtn.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="17 8 12 3 7 8"></polyline>
-      <line x1="12" y1="3" x2="12" y2="15"></line>
-    </svg>
-    <span data-i18n="processing.selectNewFile">${i18n.t('processing.selectNewFile') || 'Sélectionner un nouveau fichier'}</span>
-  `;
-  
-  saveModificationBtn.disabled = true;
-  saveModificationBtn.classList.remove('btn-success');
-  saveModificationBtn.classList.add('opacity-50');
-  saveModificationBtn.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-    <span data-i18n="processing.confirmAndSend">${i18n.t('processing.confirmAndSend') || 'Confirmer et envoyer'}</span>
-  `;
-  
-  // Enable all inputs
-  modBureau.disabled = false;
-  modBureauSearch.disabled = false;
-  modRegistreType.disabled = false;
-  modDocumentYear.disabled = false;
-  modRegistreNumber.disabled = false;
-  modActeNumber.disabled = false;
-  
-  // Set error info
-  const modFileNameEl = document.getElementById('modFileName');
-  const errorTypeEl = document.getElementById('errorType');
-  const agentMessageEl = document.getElementById('agentMessage');
-  
-  if (modFileNameEl) modFileNameEl.textContent = doc.original_filename;
-  if (errorTypeEl) errorTypeEl.textContent = doc.rejection_error_type || 'Type d\'erreur non spécifié';
-  if (agentMessageEl) agentMessageEl.textContent = doc.rejection_reason || 'Aucun message';
-  
-  // Set metadata fields
-  if (modBureauSearch) {
-    const bureauObj = getAllBureauxTranslated().find(b => b.key === doc.bureau);
-    modBureauSearch.value = bureauObj ? bureauObj.name : (doc.bureau || '');
+  if (!currentRejectedDoc) {
+    return;
   }
-  populateModBureauDropdown('', doc.bureau);
   
-  populateModRegistreTypeDropdown(doc.registre_type);
-  if (modDocumentYear) modDocumentYear.value = doc.year || '';
-  if (modRegistreNumber) modRegistreNumber.value = doc.registre_number || '';
-  if (modActeNumber) modActeNumber.value = doc.acte_number || '';
+  // Get form data
+  const bureau = document.getElementById('modBureau').value;
+  const registreType = document.getElementById('modRegistreType').value;
+  const year = document.getElementById('modDocumentYear').value;
+  const registreNumber = document.getElementById('modRegistreNumber').value;
+  const acteNumber = document.getElementById('modActeNumber').value;
   
-  // Remove any existing status info
-  const existingStatus = modificationForm.querySelector('.status-info');
-  if (existingStatus) existingStatus.remove();
+  // Validate
+  if (!bureau || !registreType || !year || !registreNumber || !acteNumber) {
+    alert(i18n.t('processing.fillAllFields'));
+    return;
+  }
   
-  renderRejectedDocuments();
-}
-
-// Save Modification Button Handler - updates metadata only
-if (saveModificationBtn) {
-  saveModificationBtn.addEventListener('click', async () => {
-    if (!currentRejectedDoc || isModificationLocked) return;
+  // Disable button and show loading
+  const saveBtn = document.getElementById('saveModificationBtn');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = `
+    <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+    </svg>
+    <span>${i18n.t('modification.uploading')}</span>
+  `;
+  
+  showSyncStatus(i18n.t('modification.sendingToServer'), 'loading');
+  
+  try {
+    // Get JWT token and server URL
+    const token = await ipcRenderer.invoke('get-jwt-token');
+    const serverUrl = await ipcRenderer.invoke('get-server-url');
     
-    // Get updated metadata
-    const updatedData = {
-      bureau: modBureau.value,
-      registreType: modRegistreType.value,
-      year: parseInt(modDocumentYear.value),
-      registreNumber: modRegistreNumber.value.trim(),
-      acteNumber: modActeNumber.value.trim()
+    // Create FormData
+    const formData = new FormData();
+    
+    // Read file as blob
+    const fs = require('fs');
+    const fileBuffer = fs.readFileSync(selectedNewFile);
+    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    formData.append('file', blob, path.basename(selectedNewFile));
+    
+    // Add metadata
+    const metadata = {
+      filename: path.basename(selectedNewFile),
+      bureau: bureau,
+      registreType: registreType,
+      year: parseInt(year),
+      registreNumber: registreNumber,
+      acteNumber: acteNumber,
+      desktopDocumentId: `reupload-${currentRejectedDoc.id}-${Date.now()}`,
+      processedAt: new Date().toISOString()
     };
     
-    // Validate all fields
-    if (!updatedData.bureau || !updatedData.registreType || !updatedData.year || 
-        !updatedData.registreNumber || !updatedData.acteNumber) {
-      showSyncStatus('⚠ ' + (i18n.t('processing.fillAllFields') || 'Veuillez remplir tous les champs'), 'error');
-      return;
+    formData.append('metadata', JSON.stringify(metadata));
+    
+    // Send to server
+    const response = await fetch(`${serverUrl}/api/sync`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Mark as reuploaded locally
+      await ipcRenderer.invoke('mark-document-reuploaded', currentRejectedDoc.id, selectedNewFile);
+      
+      // Reload reuploaded docs
+      await loadReuploadedDocs();
+      
+      // Show success
+      showSyncStatus(i18n.t('modification.sentSuccess'), 'success');
+      
+      // Update button to show sent state
+      saveBtn.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>${i18n.t('modification.sent')}</span>
+      `;
+      saveBtn.classList.add('btn-success');
+      
+      // Update notification badge
+      updateNotificationBadge();
+      
+      // Refresh modification list to show disabled state
+      renderModificationList();
+      
+      // Clear current rejected doc and hide form after a delay
+      setTimeout(() => {
+        currentRejectedDoc = null;
+        selectedNewFile = null;
+        hideAllForms();
+      }, 2000);
+      
+    } else {
+      throw new Error(result.message || 'Upload failed');
     }
     
-    // Check if file was changed
-    if (!hasFileChanged) {
-      showSyncStatus('⚠ ' + (i18n.t('processing.mustSelectNewFile') || 'Veuillez sélectionner un nouveau fichier'), 'error');
-      return;
-    }
+  } catch (error) {
+    console.error('Error saving modification:', error);
+    showSyncStatus(`✗ ${error.message}`, 'error');
     
-    // Disable button and show loading
-    saveModificationBtn.disabled = true;
-    saveModificationBtn.innerHTML = `
-      <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+    // Re-enable button
+    saveBtn.disabled = false;
+    saveBtn.classList.remove('opacity-50');
+    saveBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
-      <span>${i18n.t('sync.syncing') || 'Envoi en cours...'}</span>
+      <span data-i18n="processing.confirmAndSend">${i18n.t('processing.confirmAndSend')}</span>
     `;
+  }
+}
+
+// Show Document
+function showDocument(filepath) {
+  const viewer = document.getElementById('documentViewer');
+  const noSelection = document.getElementById('noSelection');
+  const pdfEmbed = document.getElementById('pdfEmbed');
+  
+  noSelection.style.display = 'none';
+  viewer.style.display = 'block';
+  
+  pdfEmbed.src = filepath;
+}
+
+// Hide All Forms
+function hideAllForms() {
+  document.getElementById('processingForm').style.display = 'none';
+  document.getElementById('modificationForm').style.display = 'none';
+  document.getElementById('noDocumentSelected').style.display = 'flex';
+  document.getElementById('documentViewer').style.display = 'none';
+  document.getElementById('noSelection').style.display = 'flex';
+}
+
+// Save Document
+async function saveDocument() {
+  if (!currentDocument) return;
+  
+  const bureau = document.getElementById('bureau').value;
+  const registreType = document.getElementById('registreType').value;
+  const year = document.getElementById('documentYear').value;
+  const registreNumber = document.getElementById('registreNumber').value;
+  const acteNumber = document.getElementById('acteNumber').value;
+  
+  if (!bureau || !registreType || !year || !registreNumber || !acteNumber) {
+    alert(i18n.t('processing.fillAllFields'));
+    return;
+  }
+  
+  const data = {
+    bureau,
+    registreType,
+    year: parseInt(year),
+    registreNumber,
+    acteNumber
+  };
+  
+  const updated = await ipcRenderer.invoke('update-document', currentDocument.id, data);
+  
+  // Update local document
+  const index = documents.findIndex(d => d.id === currentDocument.id);
+  if (index !== -1) {
+    documents[index] = updated;
+    currentDocument = updated;
+  }
+  
+  // Re-render
+  renderDocumentList();
+  showProcessingForm(updated);
+}
+
+// Sync Document
+async function syncDocument() {
+  if (!currentDocument || !currentDocument.processed) {
+    return;
+  }
+  
+  const syncBtn = document.getElementById('syncBtn');
+  syncBtn.disabled = true;
+  syncBtn.innerHTML = `
+    <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+    </svg>
+    <span>${i18n.t('sync.syncing')}</span>
+  `;
+  
+  showSyncStatus(i18n.t('sync.syncing'), 'loading');
+  
+  try {
+    const token = await ipcRenderer.invoke('get-jwt-token');
+    const serverUrl = await ipcRenderer.invoke('get-server-url');
+    
+    // Create FormData
+    const formData = new FormData();
+    
+    // Read file
+    const fs = require('fs');
+    const fileBuffer = fs.readFileSync(currentDocument.filepath);
+    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    formData.append('file', blob, currentDocument.filename);
+    
+    // Add metadata
+    const metadata = {
+      filename: currentDocument.filename,
+      bureau: currentDocument.bureau,
+      registreType: currentDocument.registre_type,
+      year: currentDocument.year,
+      registreNumber: currentDocument.registre_number,
+      acteNumber: currentDocument.acte_number,
+      desktopDocumentId: currentDocument.id.toString(),
+      processedAt: new Date().toISOString()
+    };
+    
+    formData.append('metadata', JSON.stringify(metadata));
+    
+    // Send to server
+    const response = await fetch(`${serverUrl}/api/sync`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Delete local document
+      await ipcRenderer.invoke('delete-document', currentDocument.id, currentDocument.filepath);
+      
+      // Remove from list
+      documents = documents.filter(d => d.id !== currentDocument.id);
+      currentDocument = null;
+      
+      // Show success
+      showSyncStatus(i18n.t('sync.success').replace('{count}', '1'), 'success');
+      
+      // Re-render and hide form
+      renderDocumentList();
+      hideAllForms();
+      
+    } else {
+      throw new Error(result.error || 'Sync failed');
+    }
+    
+  } catch (error) {
+    console.error('Sync error:', error);
+    showSyncStatus(`✗ ${error.message}`, 'error');
+    
+    // Re-enable button
+    syncBtn.disabled = false;
+    syncBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+      </svg>
+      <span data-i18n="processing.sync">${i18n.t('processing.sync')}</span>
+    `;
+  }
+}
+
+// Sync All Processed Documents
+async function syncAllProcessedDocuments() {
+  const processedDocs = documents.filter(d => d.processed === 1);
+  
+  if (processedDocs.length === 0) {
+    showSyncAllStatus(i18n.t('sync.noProcessed'), 'warning');
+    return;
+  }
+  
+  const syncAllBtn = document.getElementById('syncAllBtn');
+  syncAllBtn.disabled = true;
+  
+  let successCount = 0;
+  let failedCount = 0;
+  
+  showSyncAllStatus(i18n.t('sync.progress').replace('{current}', '0').replace('{total}', processedDocs.length), 'loading');
+  
+  for (let i = 0; i < processedDocs.length; i++) {
+    const doc = processedDocs[i];
     
     try {
-      showSyncStatus((i18n.t('modification.uploading') || 'Préparation de l\'envoi...'), 'loading');
+      const token = await ipcRenderer.invoke('get-jwt-token');
+      const serverUrl = await ipcRenderer.invoke('get-server-url');
       
-      // Read the new file
-      const fileBuffer = fs.readFileSync(selectedNewFile);
-      const blob = new Blob([fileBuffer], { type: 'application/pdf' });
-      const filename = currentRejectedDoc.original_filename;
-      
-      // Create FormData
       const formData = new FormData();
-      formData.append('file', blob, filename);
-      formData.append('metadata', JSON.stringify({
-        filename: filename,
-        bureau: updatedData.bureau,
-        acteNumber: updatedData.acteNumber,
-        registreNumber: updatedData.registreNumber,
-        year: updatedData.year,
-        registreType: updatedData.registreType,
-        processedAt: new Date().toISOString(),
-        desktopDocumentId: currentRejectedDoc.desktop_document_id || `reupload-${Date.now()}`,
-        originalDocumentId: currentRejectedDoc.id // Include original doc ID
-      }));
+      const fs = require('fs');
+      const fileBuffer = fs.readFileSync(doc.filepath);
+      const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+      formData.append('file', blob, doc.filename);
       
-      showSyncStatus((i18n.t('modification.sendingToServer') || 'Envoi au serveur...'), 'loading');
+      const metadata = {
+        filename: doc.filename,
+        bureau: doc.bureau,
+        registreType: doc.registre_type,
+        year: doc.year,
+        registreNumber: doc.registre_number,
+        acteNumber: doc.acte_number,
+        desktopDocumentId: doc.id.toString(),
+        processedAt: new Date().toISOString()
+      };
       
-      // Send to server
+      formData.append('metadata', JSON.stringify(metadata));
+      
       const response = await fetch(`${serverUrl}/api/sync`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${jwtToken}`
+          'Authorization': `Bearer ${token}`
         },
         body: formData
       });
       
-      if (!response.ok) {
-        throw new Error(`Le serveur a répondu avec ${response.status}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        await ipcRenderer.invoke('delete-document', doc.id, doc.filepath);
+        successCount++;
+      } else {
+        failedCount++;
       }
       
-      await response.json();
-      
-      // Lock the form
-      isModificationLocked = true;
-      
-      // Disable all inputs
-      modBureau.disabled = true;
-      modBureauSearch.disabled = true;
-      modRegistreType.disabled = true;
-      modDocumentYear.disabled = true;
-      modRegistreNumber.disabled = true;
-      modActeNumber.disabled = true;
-      reuploadBtn.disabled = true;
-      saveModificationBtn.disabled = true;
-      
-      // Update button to show sent
-      saveModificationBtn.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span>${i18n.t('modification.sent') || 'Envoyé ✓'}</span>
-      `;
-      saveModificationBtn.classList.add('btn-success');
-      
-      showSyncStatus('✓ ' + (i18n.t('modification.sentSuccess') || 'Document envoyé avec succès et en attente de révision'), 'success');
-      
-      // Add status badge
-      const statusInfo = document.createElement('div');
-      statusInfo.className = 'status-info';
-      statusInfo.innerHTML = `
-        <div class="badge badge-warning">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          ${i18n.t('modification.awaitingReview') || 'En attente de révision'}
-        </div>
-      `;
-      modificationForm.insertBefore(statusInfo, modificationForm.firstChild);
-      
-      // Remove from list after delay
-      setTimeout(async () => {
-        await loadRejectedDocuments();
-        
-        // If this was the only document, clear selection
-        if (rejectedDocuments.length === 0) {
-          clearSelection();
-        } else {
-          // Select first document in list
-          selectRejectedDocument(rejectedDocuments[0]);
-        }
-        
-        showSyncStatus('', 'hidden');
-      }, 3000);
-      
     } catch (error) {
-      console.error('Erreur d\'envoi:', error);
-      showSyncStatus(`✗ ${i18n.t('sync.error') || 'Échec de l\'envoi'}: ${error.message}`, 'error');
-      
-      // Re-enable button
-      saveModificationBtn.disabled = false;
-      saveModificationBtn.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span data-i18n="processing.saveModification">${i18n.t('processing.saveModification') || 'Envoyer les modifications'}</span>
-      `;
+      console.error(`Failed to sync ${doc.filename}:`, error);
+      failedCount++;
     }
-  });
-}
-
-
-function clearSelection() {
-  currentDocument = null;
-  currentRejectedDoc = null;
-  noSelection.style.display = 'flex';
-  documentViewer.style.display = 'none';
-  noDocumentSelected.style.display = 'flex';
-  processingForm.style.display = 'none';
-  if (modificationForm) modificationForm.style.display = 'none';
-  renderDocuments();
-  renderRejectedDocuments();
-}
-
-function updateStatusBadge(processed) {
-  if (processed) {
-    statusBadge.textContent = i18n.t('processing.status.processed');
-    statusBadge.className = 'badge badge-processed';
+    
+    // Update progress
+    showSyncAllStatus(
+      i18n.t('sync.progress').replace('{current}', (i + 1).toString()).replace('{total}', processedDocs.length),
+      'loading'
+    );
+  }
+  
+  // Reload documents
+  await loadDocuments();
+  
+  // Show final result
+  if (failedCount === 0) {
+    showSyncAllStatus(i18n.t('sync.success').replace('{count}', successCount.toString()), 'success');
   } else {
-    statusBadge.textContent = i18n.t('processing.status.unprocessed');
-    statusBadge.className = 'badge badge-unprocessed';
+    showSyncAllStatus(
+      i18n.t('sync.partial').replace('{success}', successCount.toString()).replace('{failed}', failedCount.toString()),
+      'warning'
+    );
+  }
+  
+  // Re-enable button
+  syncAllBtn.disabled = false;
+  
+  // Hide status after delay
+  setTimeout(() => {
+    document.getElementById('syncAllStatus').style.display = 'none';
+  }, 5000);
+}
+
+function showSyncStatus(message, type) {
+  const statusDiv = document.getElementById('syncStatus');
+  statusDiv.textContent = message;
+  statusDiv.className = `sync-status sync-status-${type}`;
+  statusDiv.style.display = 'flex';
+  
+  if (type === 'success' || type === 'error') {
+    setTimeout(() => {
+      statusDiv.style.display = 'none';
+    }, 3000);
   }
 }
 
-// Initialize app
-init();
+function showSyncAllStatus(message, type) {
+  const statusDiv = document.getElementById('syncAllStatus');
+  statusDiv.textContent = message;
+  statusDiv.className = `sync-all-status sync-status-${type}`;
+  statusDiv.style.display = 'flex';
+}
+
+// Initialize Searchable Selects
+function initializeSearchableSelects() {
+  // Initialize bureau selects
+  initializeSearchableSelect('bureau', 'bureauSearch', bureaux);
+  initializeSearchableSelect('modBureau', 'modBureauSearch', bureaux);
+  
+  // Initialize registre type selects
+  const registreSelect = document.getElementById('registreType');
+  const modRegistreSelect = document.getElementById('modRegistreType');
+  
+  Object.keys(registreTypes).forEach(key => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = registreTypes[key];
+    registreSelect.appendChild(option.cloneNode(true));
+    modRegistreSelect.appendChild(option);
+  });
+}
+
+function initializeSearchableSelect(selectId, searchId, options) {
+  const select = document.getElementById(selectId);
+  const search = document.getElementById(searchId);
+  
+  let allOptions = [...options];
+  
+  function populateSelect(filterText = '') {
+    select.innerHTML = '';
+    
+    const filtered = allOptions.filter(opt => 
+      opt.toLowerCase().includes(filterText.toLowerCase())
+    );
+    
+    filtered.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt;
+      option.textContent = opt;
+      select.appendChild(option);
+    });
+    
+    // Add "add new" option if searching and not exact match
+    if (filterText && !allOptions.some(opt => opt.toLowerCase() === filterText.toLowerCase())) {
+      const addOption = document.createElement('option');
+      addOption.value = filterText;
+      addOption.textContent = `➕ ${filterText}`;
+      addOption.className = 'add-new-option';
+      select.appendChild(addOption);
+    }
+  }
+  
+  search.addEventListener('input', (e) => {
+    populateSelect(e.target.value);
+  });
+  
+  select.addEventListener('change', () => {
+    const selectedValue = select.value;
+    if (selectedValue && !allOptions.includes(selectedValue)) {
+      allOptions.push(selectedValue);
+      allOptions.sort();
+    }
+    search.value = selectedValue;
+  });
+  
+  // Initial population
+  populateSelect();
+}
+
+// Listen for document changes from main process
+ipcRenderer.on('document-added', (event, doc) => {
+  loadDocuments();
+});
+
+ipcRenderer.on('document-removed', (event, filepath) => {
+  loadDocuments();
+});

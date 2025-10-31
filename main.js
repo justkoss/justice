@@ -527,3 +527,5 @@ ipcMain.handle('clear-reupload-status', (event, serverDocId) => {
     return { success: false, message: error.message };
   }
 });
+
+// mainWindow.webContents.openDevTools();
