@@ -52,7 +52,7 @@ export function Sidebar() {
       roles: ['admin', 'supervisor'], // Only supervisors and admins
     },
     {
-      href: '/tree',
+      href: '/dashboard/tree',
       label: t('nav.tree'),
       icon: <FolderTree className="h-5 w-5" />,
       roles: ['admin', 'supervisor'], // Supervisors see assigned bureaus, admins see all

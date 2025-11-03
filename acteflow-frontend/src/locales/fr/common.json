@@ -106,6 +106,22 @@
     "selectDocument": "Sélectionner un document",
     "documentDetails": "Détails du document"
   },
+  "tree": {
+    "title": "Arborescence",
+    "browse": "Parcourir",
+    "hierarchy": "Hiérarchie",
+    "selectFolder": "Sélectionner un dossier",
+    "expandAll": "Tout développer",
+    "collapseAll": "Tout réduire",
+    "viewDocuments": "Voir les documents",
+    "folderEmpty": "Dossier vide",
+    "bureau": "Bureau",
+    "registreType": "Type de registre",
+    "year": "Année",
+    "registre": "Registre",
+    "documentsCount": "documents",
+    "virtualPath": "Chemin virtuel"
+  },
   "review": {
     "title": "File d'attente de révision",
     "reviewDocument": "Réviser le document",

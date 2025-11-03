@@ -14,7 +14,7 @@ const { notFound, errorHandler } = require('./src/middleware/errorHandler');
 // Import routes
 const authRoutes = require('./src/routes/auth');
 const documentRoutes = require('./src/routes/documents');
-
+const treeRoutes = require('./src/routes/tree');
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,7 +48,7 @@ initDatabase().then(() => {
   // API Routes
   app.use('/api/auth', authRoutes);
   app.use('/api', documentRoutes); // Includes /api/sync for desktop app compatibility
-  
+  app.use('/api/tree', treeRoutes);
   // Serve static files (uploaded documents) - only for authenticated users
   // Note: In production, use nginx or similar for static file serving
   app.use('/files', express.static(path.join(__dirname, 'storage')));

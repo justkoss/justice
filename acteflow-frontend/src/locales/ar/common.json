@@ -106,6 +106,22 @@
     "selectDocument": "حدد مستندًا",
     "documentDetails": "تفاصيل المستند"
   },
+  "tree": {
+    "title": "الشجرة",
+    "browse": "تصفح",
+    "hierarchy": "التسلسل الهرمي",
+    "selectFolder": "حدد مجلدًا",
+    "expandAll": "توسيع الكل",
+    "collapseAll": "طي الكل",
+    "viewDocuments": "عرض المستندات",
+    "folderEmpty": "مجلد فارغ",
+    "bureau": "المكتب",
+    "registreType": "نوع السجل",
+    "year": "السنة",
+    "registre": "السجل",
+    "documentsCount": "مستندات",
+    "virtualPath": "المسار الافتراضي"
+  },
   "review": {
     "title": "قائمة انتظار المراجعة",
     "reviewDocument": "مراجعة المستند",
