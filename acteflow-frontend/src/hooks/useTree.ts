@@ -111,9 +111,16 @@ export function useTree(filters?: DocumentFilters) {
   return useQuery({
     queryKey: ['tree', filters],
     queryFn: async () => {
-      const response = await api.getDocumentTree(filters);
-      const nodes = response.data as TreeNodeData[];
-      return buildTreeHierarchy(nodes);
+      try {
+        const response = await api.getDocumentTree(filters);
+        const nodes = response.data.data as TreeNodeData[];
+
+        // console.log('Fetched tree nodes:', nodes);
+        return buildTreeHierarchy(nodes);
+      } catch (error) {
+        console.error('Error fetching tree data:', error);
+      }
+      
     },
     staleTime: 60000, // 1 minute
   });
