@@ -284,11 +284,15 @@ function transaction(callback) {
     db.run('BEGIN TRANSACTION');
     callback();
     db.run('COMMIT');
-    saveDatabase();
-    return true;
   } catch (error) {
-    db.run('ROLLBACK');
-    throw error;
+    console.error('Transaction error:', error);
+    try {
+      db.run('ROLLBACK');
+    } catch (rollbackError) {
+      console.warn('No active transaction to rollback:', rollbackError.message);
+    }
+  } finally {
+    saveDatabase();
   }
 }
 
