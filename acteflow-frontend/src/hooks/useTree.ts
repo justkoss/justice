@@ -136,7 +136,7 @@ export function useTreeDocuments(path: {
   registreNumber?: string;
 }) {
   const filters: DocumentFilters = {
-    status: 'stored', // Only stored documents in tree
+    status: 'stored,processing,fields_extracted', // Only stored documents in tree
     bureau: path.bureau,
     registre_type: path.registreType,
     year: path.year,

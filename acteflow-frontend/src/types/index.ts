@@ -16,7 +16,7 @@ export interface User {
 }
 
 // Document types
-export type DocumentStatus = 'pending' | 'reviewing' | 'rejected_for_update' | 'stored';
+export type DocumentStatus = 'pending' | 'reviewing' | 'rejected_for_update' | 'stored'| 'processing'  | 'fields_extracted';    
 
 export interface Document {
   id: number;
@@ -168,7 +168,7 @@ export interface ReviewFormData {
 
 // Filter types
 export interface DocumentFilters {
-  status?: DocumentStatus | 'all';
+  status?: DocumentStatus | 'all' | string;
   bureau?: string;
   registre_type?: string;
   year?: number;

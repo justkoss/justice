@@ -30,7 +30,7 @@ export function TreeView() {
 
   // Fetch tree data
   const { data: treeData, isLoading: treeLoading, error: treeError } = useTree({
-    status: 'stored',
+    status: 'stored,processing,fields_extracted',
   });
 
   // Fetch documents for selected path

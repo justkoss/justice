@@ -17,8 +17,11 @@ const User = require('../models/User');
  * - year: Filter by year
  */
 router.get('/', authenticate, asyncHandler(async (req, res) => {
-  const { status = 'stored', bureau, registre_type, year } = req.query;
+  const { status = 'stored,processing,fields_extracted', bureau, registre_type, year } = req.query;
   const user = req.user;
+
+  // Parse multiple statuses
+  const statuses = status.split(',').map(s => s.trim());
 
   // Build query
   let sql = `
@@ -29,9 +32,9 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
       registre_number,
       COUNT(*) as count
     FROM documents
-    WHERE status = ?
+    WHERE status IN (${statuses.map(() => '?').join(',')})
   `;
-  const params = [status];
+  const params = [...statuses];
 
   // Role-based filtering
   if (user.role === 'supervisor') {
