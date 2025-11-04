@@ -27,6 +27,7 @@ export default function ProcessingPage() {
   const [rotation, setRotation] = useState(0);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ocrFields, setOcrFields] = useState<Record<string, any> | null>(null);
 
   const { data: document, isLoading: docLoading } = useDocument(documentId ? parseInt(documentId) : null);
   const { data: fieldsData, refetch: refetchFields } = useDocumentFields(documentId ? parseInt(documentId) : null);
@@ -80,8 +81,15 @@ export default function ProcessingPage() {
     if (!documentId) return;
     
     try {
+      console.log('Starting OCR...');
       const result = await ocrMutation.mutateAsync(parseInt(documentId));
-      await refetchFields();
+      console.log('OCR returned:', result);
+      
+      // Extract the fields from the OCR response
+      if (result.data && result.data.fields) {
+        console.log('Setting OCR fields:', result.data.fields);
+        setOcrFields(result.data.fields);
+      }
     } catch (error) {
       console.error('OCR error:', error);
     }
@@ -90,6 +98,9 @@ export default function ProcessingPage() {
   const handleBack = () => {
     window.close();
   };
+
+  // Determine which fields to use: OCR fields take priority, then saved fields
+  const currentFields = ocrFields || fieldsData?.fieldsObject || {};
 
   if (!documentId) {
     return (
@@ -154,9 +165,9 @@ export default function ProcessingPage() {
       {/* Main Content - Two independently scrollable columns */}
       <div className="flex-1 overflow-hidden p-4">
         <div className="h-full flex gap-4">
-          {/* PDF Viewer - Left Side - 60% width, ENTIRE COLUMN scrollable */}
+          {/* PDF Viewer - Left Side - 60% width */}
           <div className="w-[60%] bg-bg-secondary rounded-xl border border-border-primary flex flex-col overflow-hidden">
-            {/* PDF Toolbar - Fixed at top of column */}
+            {/* PDF Toolbar - Fixed at top */}
             <div className="flex items-center justify-between p-4 border-b border-border-primary flex-shrink-0">
               <h3 className="text-lg font-semibold text-text-primary">
                 {t('documents.preview')}
@@ -200,7 +211,7 @@ export default function ProcessingPage() {
               </div>
             </div>
 
-            {/* PDF Content - THIS ENTIRE AREA SCROLLS */}
+            {/* PDF Content - Scrollable */}
             <div className="flex-1 overflow-y-auto bg-bg-tertiary p-4">
               {loading && (
                 <div className="h-full flex items-center justify-center">
@@ -233,9 +244,9 @@ export default function ProcessingPage() {
             </div>
           </div>
 
-          {/* Form Column - Right Side - 40% width, ENTIRE COLUMN scrollable */}
-          <div className="w-[40%] bg-bg-secondary rounded-xl border border-border-primary flex flex-col overflow-hidden">
-            {/* Form Header - Fixed at top of column */}
+          {/* Form Column - Right Side - 40% width */}
+          <div className="w-[40%] h-full flex flex-col bg-bg-secondary rounded-xl border border-border-primary overflow-hidden">
+            {/* Form Header - Fixed */}
             <div className="p-4 border-b border-border-primary flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-text-primary">
@@ -248,7 +259,7 @@ export default function ProcessingPage() {
                   onClick={handleOcr}
                   isLoading={ocrMutation.isPending}
                   icon={<Sparkles className="h-4 w-4" />}
-                  disabled={!document || String(document.status) === 'fields_extracted'}
+                  disabled={!document}
                 >
                   {t('documents.ocr')}
                 </Button>
@@ -262,14 +273,19 @@ export default function ProcessingPage() {
               )}
             </div>
 
-            {/* Form Content - THIS ENTIRE AREA SCROLLS (fields only) */}
+            {/* Form Content - Scrollable */}
             <div className="flex-1 overflow-y-auto p-4">
               {document && documentId && (
                 <DynamicFieldForm
+                  key={ocrFields ? 'ocr-fields' : 'saved-fields'} // Force re-render when OCR completes
                   documentId={parseInt(documentId)}
                   documentType={document.registre_type}
-                  initialFields={fieldsData?.fieldsObject || {}}
-                  onSuccess={refetchFields}
+                  initialFields={currentFields}
+                  onSuccess={() => {
+                    // After save, clear OCR fields and refetch from database
+                    setOcrFields(null);
+                    refetchFields();
+                  }}
                 />
               )}
 
@@ -278,11 +294,6 @@ export default function ProcessingPage() {
                   <p className="text-text-secondary">{t('documents.noDocuments')}</p>
                 </div>
               )}
-            </div>
-
-            {/* Form Buttons - Fixed at bottom of column */}
-            <div className="p-4 border-t border-border-primary flex-shrink-0 bg-bg-secondary">
-              {/* Pass buttons as render prop or use context - for now we'll move this logic */}
             </div>
           </div>
         </div>

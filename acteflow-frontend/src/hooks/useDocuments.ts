@@ -210,18 +210,19 @@ export function useOcrDocument() {
 
   return useMutation({
     mutationFn: async (documentId: number) => {
-      return api.ocrDocument(documentId);
+      const result = await api.ocrDocument(documentId);
+      return result.data; // Return the full response data
     },
     onSuccess: (response, documentId) => {
       toast.success(t('documents.ocrSuccess'), {
         description: t('documents.ocrSuccessDesc'),
       });
 
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['document-fields', documentId] });
+      // Invalidate document query to update status
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
     },
     onError: (error: any) => {
+      console.error('OCR error:', error);
       toast.error(t('errors.generic'), {
         description: error.response?.data?.message || error.message,
       });

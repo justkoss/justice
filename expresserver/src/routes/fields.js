@@ -114,6 +114,11 @@ router.post('/:id/fields', authenticate, isSupervisorOrAdmin, asyncHandler(async
  * @desc    Mock OCR endpoint - extracts text from document
  * @access  Private (Supervisor, Admin)
  */
+/**
+ * @route   POST /api/documents/:id/ocr
+ * @desc    Mock OCR endpoint - extracts text from document (NO DATABASE SAVE)
+ * @access  Private (Supervisor, Admin)
+ */
 router.post('/:id/ocr', authenticate, isSupervisorOrAdmin, asyncHandler(async (req, res) => {
   const documentId = parseInt(req.params.id);
 
@@ -141,12 +146,12 @@ router.post('/:id/ocr', authenticate, isSupervisorOrAdmin, asyncHandler(async (r
     "الصفحة": null,
     "رسم ولادة رقم": "1025 ياسن -تايك",
     "في يوم": "عاشر شعبان",
-    "عام": "ألف و أربعمائة YASSINE - TAIK و أربعة و عشرون",
+    "عام": "ألف و أربعمائة و أربعة و عشرون",
     "هجرية موافق": "ستة أكتوبر ألفان و ثلاثة",
     "على الساعة": "السادسة",
     "والدقيقة": "و خمسين",
-    "ولد ب": "سلا ياسين - YASSINE",
-    "اسمه العائلي": "تايك TAIK",
+    "ولد ب": "سلا ياسين",
+    "اسمه العائلي": "تايك",
     "من والد": "عبد المجيد بن عبد اللة",
     "جنسيته": "مغربية",
     "المولود ب": "بني ملال",
@@ -202,21 +207,22 @@ router.post('/:id/ocr', authenticate, isSupervisorOrAdmin, asyncHandler(async (r
   const extractedFields = {};
   Object.keys(mockOcrResult).forEach(arabicKey => {
     const fieldName = fieldMapping[arabicKey];
-    if (fieldName) {
+    if (fieldName && mockOcrResult[arabicKey] !== null) {
       extractedFields[fieldName] = mockOcrResult[arabicKey];
     }
   });
 
-  // Update document status to processing
+  // Update document status to processing (but don't save fields yet)
   Document.updateStatus(documentId, 'processing');
 
   // Log OCR action
-  Document.logHistory(documentId, 'fields_extracted', req.user.id, {
+  Document.logHistory(documentId, 'ocr_performed', req.user.id, {
     method: 'ocr',
     field_count: Object.keys(extractedFields).length,
-    ocr_confidence: 0.95 // Mock confidence
+    ocr_confidence: 0.95
   });
 
+  // Return extracted fields WITHOUT saving to database
   res.json({
     success: true,
     message: 'OCR processing completed',
