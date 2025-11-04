@@ -70,7 +70,7 @@ function createTables() {
     )
   `);
 
-  // Documents table
+  // Documents table (updated with new statuses)
   db.run(`
     CREATE TABLE IF NOT EXISTS documents (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,9 +86,9 @@ function createTables() {
       registre_number TEXT NOT NULL,
       acte_number TEXT NOT NULL,
       
-      -- Status and workflow
+      -- Status and workflow (updated to include processing and fields_extracted)
       status TEXT NOT NULL DEFAULT 'pending' 
-        CHECK(status IN ('pending', 'reviewing', 'rejected_for_update', 'stored')),
+        CHECK(status IN ('pending', 'reviewing', 'rejected_for_update', 'stored', 'processing', 'fields_extracted')),
       
       -- User tracking
       uploaded_by INTEGER NOT NULL,
@@ -96,6 +96,7 @@ function createTables() {
       
       -- Timestamps
       uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME, 
       reviewed_at DATETIME,
       stored_at DATETIME,
       
@@ -120,6 +121,27 @@ function createTables() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_documents_uploaded_by ON documents(uploaded_by)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_documents_bureau ON documents(bureau)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_documents_year ON documents(year)`);
+
+  // Document fields table (NEW)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS document_fields (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      document_id INTEGER NOT NULL,
+      field_name TEXT NOT NULL,
+      field_value TEXT,
+      field_type TEXT DEFAULT 'text',
+      field_order INTEGER DEFAULT 0,
+      updated_by INTEGER NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+      FOREIGN KEY (updated_by) REFERENCES users(id)
+    )
+  `);
+
+  // Create indexes for document_fields table
+  db.run(`CREATE INDEX IF NOT EXISTS idx_document_fields_document_id ON document_fields(document_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_document_fields_name ON document_fields(field_name)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_document_fields_value ON document_fields(field_value)`);
 
   // Document history table
   db.run(`
@@ -227,7 +249,6 @@ function queryAll(sql, params = []) {
 function queryOne(sql, params = []) {
   if (!db) throw new Error('Database not initialized');
   const results = queryAll(sql, params);
-  // console.log('Query One Results:', results);
   return results.length > 0 ? results[0] : null;
 }
 
@@ -241,7 +262,6 @@ function runQuery(sql, params = []) {
     
     // Immediately get the last inserted ID before saving
     const result = queryOne('SELECT last_insert_rowid() AS id');
-    console.log('Last Insert ID Result:', result);
 
     // Only save after confirming insert succeeded
     saveDatabase();

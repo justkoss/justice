@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRoles?: string[];
@@ -13,14 +14,16 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
 
+  
   useEffect(() => {
     // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
+
+
+    
 
     // Check role permissions if specified
+    console.log('user role:', user?.role);
+    console.log('requiredRoles:', requiredRoles);
     if (requiredRoles && user && !requiredRoles.includes(user.role)) {
       // Redirect to dashboard if user doesn't have required role
       router.push('/dashboard');

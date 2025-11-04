@@ -104,7 +104,22 @@
     "history": "التاريخ",
     "noDocuments": "لا توجد مستندات",
     "selectDocument": "حدد مستندًا",
-    "documentDetails": "تفاصيل المستند"
+    "documentDetails": "تفاصيل المستند",
+    "processing": "معالجة المستند",
+    "preview": "معاينة",
+    "extractedFields": "الحقول المستخرجة",
+    "ocr": "استخراج (OCR)",
+    "ocrProcessing": "جاري الاستخراج...",
+    "ocrSuccess": "نجح الاستخراج",
+    "ocrSuccessDesc": "تم استخراج الحقول بنجاح",
+    "noSchema": "لا يوجد نموذج متاح لهذا النوع",
+    "fieldsSaved": "تم حفظ الحقول",
+    "fieldsSavedDesc": "تم حفظ التعديلات",
+    "fieldsSubmitted": "تم إرسال الحقول",
+    "fieldsSubmittedDesc": "تم وضع علامة على المستند كمعالج",
+    "fieldsDeleted": "تم حذف الحقول",
+    "unsavedChanges": "تغييرات غير محفوظة",
+    "allChangesSaved": "تم حفظ جميع التغييرات"
   },
   "tree": {
     "title": "الشجرة",

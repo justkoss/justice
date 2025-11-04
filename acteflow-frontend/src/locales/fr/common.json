@@ -104,7 +104,22 @@
     "history": "Historique",
     "noDocuments": "Aucun document trouvé",
     "selectDocument": "Sélectionner un document",
-    "documentDetails": "Détails du document"
+    "documentDetails": "Détails du document",
+    "processing": "Traitement du document",
+    "preview": "Aperçu",
+    "extractedFields": "Champs extraits",
+    "ocr": "Extraire (OCR)",
+    "ocrProcessing": "Extraction en cours...",
+    "ocrSuccess": "Extraction réussie",
+    "ocrSuccessDesc": "Les champs ont été extraits avec succès",
+    "noSchema": "Aucun schéma de formulaire disponible pour ce type",
+    "fieldsSaved": "Champs enregistrés",
+    "fieldsSavedDesc": "Les modifications ont été enregistrées",
+    "fieldsSubmitted": "Champs soumis",
+    "fieldsSubmittedDesc": "Le document a été marqué comme traité",
+    "fieldsDeleted": "Champs supprimés",
+    "unsavedChanges": "Modifications non enregistrées",
+    "allChangesSaved": "Toutes les modifications sont enregistrées"
   },
   "tree": {
     "title": "Arborescence",

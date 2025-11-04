@@ -140,6 +140,25 @@ export const api = {
   // Health check
   healthCheck: () =>
     apiClient.get('/api/health'),
+
+  // Document Fields
+  getDocumentFields: (documentId: number) =>
+    apiClient.get(`/api/documents/${documentId}/fields`),
+
+  saveDocumentFields: (documentId: number, fields: any[], submit: boolean = false) =>
+    apiClient.post(`/api/documents/${documentId}/fields`, { fields, submit }),
+
+  deleteDocumentFields: (documentId: number) =>
+    apiClient.delete(`/api/documents/${documentId}/fields`),
+
+  // OCR
+  ocrDocument: (documentId: number) =>
+    apiClient.post(`/api/documents/${documentId}/ocr`),
+
+  // Form Schemas
+  getFormSchema: (documentType: string) =>
+    apiClient.get(`/api/documents/forms/schema/${documentType}`),
+
 };
 
 export default apiClient;

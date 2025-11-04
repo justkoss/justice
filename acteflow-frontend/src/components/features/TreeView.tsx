@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { useTree, useTreeDocuments } from '@/hooks/useTree';
 import {
   FileText,
-  Download,
   Eye,
   Loader2,
   AlertCircle,
@@ -46,36 +45,17 @@ export function TreeView() {
   };
 
   const handleViewDocument = (doc: Document) => {
-    // Open document in new tab or modal
-    window.open(`/dashboard/review/${doc.id}`, '_blank');
+    // Open processing page in new tab
+    window.open(`/dashboard/processing?id=${doc.id}`, '_blank');
   };
 
-  const handleDownloadDocument = async (doc: Document) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/documents/${doc.id}/file`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = doc.original_filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-    }
+  const getStatusVariant = (status: string) => {
+    const variants: Record<string, any> = {
+      stored: 'stored',
+      processing: 'reviewing',
+      fields_extracted: 'success',
+    };
+    return variants[status] || 'default';
   };
 
   return (
@@ -172,7 +152,7 @@ export function TreeView() {
                     {t('documents.selectDocument')}
                   </p>
                   <p className="text-text-muted text-sm mt-2">
-                    Select a folder from the tree to view documents
+                    {t('tree.selectFolder')}
                   </p>
                 </div>
               </div>
@@ -243,8 +223,8 @@ export function TreeView() {
                             <Badge variant="default" size="sm">
                               {doc.acte_number}
                             </Badge>
-                            <Badge variant="stored" size="sm">
-                              {t('documents.stored')}
+                            <Badge variant={getStatusVariant(doc.status)} size="sm">
+                              {t(`documents.${doc.status}`)}
                             </Badge>
                           </div>
                         </div>
@@ -252,20 +232,13 @@ export function TreeView() {
                         {/* Actions */}
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <Button
-                            variant="ghost"
+                            variant="primary"
                             size="sm"
                             onClick={() => handleViewDocument(doc)}
+                            icon={<Eye className="h-4 w-4" />}
                             title={t('documents.view')}
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDownloadDocument(doc)}
-                            title={t('documents.download')}
-                          >
-                            <Download className="h-4 w-4" />
+                            {t('documents.view')}
                           </Button>
                         </div>
                       </div>

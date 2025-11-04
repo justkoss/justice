@@ -1,0 +1,35 @@
+{
+  "type": "generic",
+  "label": "Document Générique",
+  "version": "1.0",
+  "fields": [
+    {
+      "name": "document_number",
+      "label": "Numéro du document",
+      "type": "text",
+      "order": 1,
+      "required": true
+    },
+    {
+      "name": "document_date",
+      "label": "Date du document",
+      "type": "text",
+      "order": 2,
+      "required": true
+    },
+    {
+      "name": "full_name",
+      "label": "Nom complet",
+      "type": "text",
+      "order": 3,
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes",
+      "type": "textarea",
+      "order": 4,
+      "required": false
+    }
+  ]
+}

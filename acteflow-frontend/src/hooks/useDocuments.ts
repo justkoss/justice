@@ -151,3 +151,121 @@ export function useRejectDocument() {
     },
   });
 }
+
+/**
+ * Fetch document fields
+ */
+export function useDocumentFields(documentId: number | null) {
+  return useQuery({
+    queryKey: ['document-fields', documentId],
+    queryFn: async () => {
+      if (!documentId) return null;
+      const response = await api.getDocumentFields(documentId);
+      return response.data.data;
+    },
+    enabled: !!documentId,
+  });
+}
+
+/**
+ * Save document fields
+ */
+export function useSaveDocumentFields() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      documentId, 
+      fields, 
+      submit 
+    }: { 
+      documentId: number; 
+      fields: any[]; 
+      submit: boolean;
+    }) => {
+      return api.saveDocumentFields(documentId, fields, submit);
+    },
+    onSuccess: (response, { documentId, submit }) => {
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['document-fields', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['tree'] });
+    },
+    onError: (error: any) => {
+      toast.error(t('errors.generic'), {
+        description: error.response?.data?.message || error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Trigger OCR for a document
+ */
+export function useOcrDocument() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documentId: number) => {
+      return api.ocrDocument(documentId);
+    },
+    onSuccess: (response, documentId) => {
+      toast.success(t('documents.ocrSuccess'), {
+        description: t('documents.ocrSuccessDesc'),
+      });
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['document-fields', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+    },
+    onError: (error: any) => {
+      toast.error(t('errors.generic'), {
+        description: error.response?.data?.message || error.message,
+      });
+    },
+  });
+}
+
+/**
+ * Fetch form schema for document type
+ */
+export function useFormSchema(documentType: string) {
+  return useQuery({
+    queryKey: ['form-schema', documentType],
+    queryFn: async () => {
+      const response = await api.getFormSchema(documentType);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+}
+
+/**
+ * Delete document fields (admin only)
+ */
+export function useDeleteDocumentFields() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documentId: number) => {
+      return api.deleteDocumentFields(documentId);
+    },
+    onSuccess: (response, documentId) => {
+      toast.success(t('documents.fieldsDeleted'));
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['document-fields', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+    onError: (error: any) => {
+      toast.error(t('errors.generic'), {
+        description: error.response?.data?.message || error.message,
+      });
+    },
+  });
+}

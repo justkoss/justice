@@ -1,0 +1,196 @@
+{
+  "type": "naissances",
+  "label": "Acte de Naissance",
+  "version": "1.0",
+  "fields": [
+    {
+      "name": "page",
+      "label": "Page",
+      "type": "text",
+      "order": 1,
+      "required": false
+    },
+    {
+      "name": "acte_number_text",
+      "label": "Rסm de naissance numéro",
+      "type": "text",
+      "order": 2,
+      "required": true
+    },
+    {
+      "name": "day_text",
+      "label": "En jour",
+      "type": "text",
+      "order": 3,
+      "required": true
+    },
+    {
+      "name": "year_hijri",
+      "label": "Année (Hijri)",
+      "type": "text",
+      "order": 4,
+      "required": true
+    },
+    {
+      "name": "date_match",
+      "label": "Correspondant à",
+      "type": "text",
+      "order": 5,
+      "required": true
+    },
+    {
+      "name": "time_hour",
+      "label": "À l'heure",
+      "type": "text",
+      "order": 6,
+      "required": false
+    },
+    {
+      "name": "time_minute",
+      "label": "Et minute",
+      "type": "text",
+      "order": 7,
+      "required": false
+    },
+    {
+      "name": "born_in",
+      "label": "Né à",
+      "type": "text",
+      "order": 8,
+      "required": true
+    },
+    {
+      "name": "family_name",
+      "label": "Nom de famille",
+      "type": "text",
+      "order": 9,
+      "required": true
+    },
+    {
+      "name": "father_name",
+      "label": "De père",
+      "type": "text",
+      "order": 10,
+      "required": true
+    },
+    {
+      "name": "father_nationality",
+      "label": "Sa nationalité",
+      "type": "text",
+      "order": 11,
+      "required": false
+    },
+    {
+      "name": "father_born_in",
+      "label": "Né à",
+      "type": "text",
+      "order": 12,
+      "required": false
+    },
+    {
+      "name": "father_born_date",
+      "label": "En (date)",
+      "type": "text",
+      "order": 13,
+      "required": false
+    },
+    {
+      "name": "father_born_match",
+      "label": "Correspondant (date)",
+      "type": "text",
+      "order": 14,
+      "required": false
+    },
+    {
+      "name": "father_profession",
+      "label": "Sa profession",
+      "type": "text",
+      "order": 15,
+      "required": false
+    },
+    {
+      "name": "mother_name",
+      "label": "Et de mère",
+      "type": "text",
+      "order": 16,
+      "required": true
+    },
+    {
+      "name": "mother_nationality",
+      "label": "Sa nationalité",
+      "type": "text",
+      "order": 17,
+      "required": false
+    },
+    {
+      "name": "mother_born_in",
+      "label": "Née à",
+      "type": "text",
+      "order": 18,
+      "required": false
+    },
+    {
+      "name": "mother_born_date",
+      "label": "En (date)",
+      "type": "text",
+      "order": 19,
+      "required": false
+    },
+    {
+      "name": "mother_born_match",
+      "label": "Correspondant (date)",
+      "type": "text",
+      "order": 20,
+      "required": false
+    },
+    {
+      "name": "mother_profession",
+      "label": "Sa profession",
+      "type": "text",
+      "order": 21,
+      "required": false
+    },
+    {
+      "name": "residence",
+      "label": "Résidant à",
+      "type": "text",
+      "order": 22,
+      "required": false
+    },
+    {
+      "name": "declaration_basis",
+      "label": "Sur la base de",
+      "type": "text",
+      "order": 23,
+      "required": false
+    },
+    {
+      "name": "written_or_transferred",
+      "label": "Rédigé ou transféré en",
+      "type": "text",
+      "order": 24,
+      "required": false
+    },
+    {
+      "name": "written_match",
+      "label": "Correspondant à (rédaction)",
+      "type": "text",
+      "order": 25,
+      "required": false
+    },
+    {
+      "name": "by_us",
+      "label": "De notre part",
+      "type": "text",
+      "order": 26,
+      "required": false
+    },
+    {
+      "name": "civil_status_officer",
+      "label": "Et officier de l'état civil",
+      "type": "text",
+      "order": 27,
+      "required": false
+    }
+  ]
+}

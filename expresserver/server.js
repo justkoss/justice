@@ -15,6 +15,8 @@ const { notFound, errorHandler } = require('./src/middleware/errorHandler');
 const authRoutes = require('./src/routes/auth');
 const documentRoutes = require('./src/routes/documents');
 const treeRoutes = require('./src/routes/tree');
+const fieldsRoutes = require('./src/routes/fields');
+
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,7 +54,8 @@ initDatabase().then(() => {
   // Serve static files (uploaded documents) - only for authenticated users
   // Note: In production, use nginx or similar for static file serving
   app.use('/files', express.static(path.join(__dirname, 'storage')));
-  
+  app.use('/api/documents', fieldsRoutes);
+
   // 404 handler
   app.use(notFound);
   

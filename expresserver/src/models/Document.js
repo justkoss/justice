@@ -388,6 +388,88 @@ class Document {
     
     return stats;
   }
+
+  /**
+   * Update document status
+   */
+  static updateStatus(documentId, newStatus) {
+    const validStatuses = ['pending', 'reviewing', 'rejected_for_update', 'stored', 'processing', 'fields_extracted'];
+    
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(`Invalid status: ${newStatus}`);
+    }
+
+    runQuery(`
+      UPDATE documents 
+      SET status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [newStatus, documentId]);
+
+    return this.findById(documentId);
+  }
+
+  /**
+   * Get documents by status (updated to include new statuses)
+   */
+  static getByStatus(status, filters = {}) {
+    const params = [status];
+    let sql = `
+      SELECT 
+        d.*,
+        u_uploaded.username as uploaded_by_username,
+        u_uploaded.full_name as uploaded_by_name
+      FROM documents d
+      LEFT JOIN users u_uploaded ON d.uploaded_by = u_uploaded.id
+      WHERE d.status = ?
+    `;
+
+    if (filters.bureau) {
+      sql += ' AND d.bureau = ?';
+      params.push(filters.bureau);
+    }
+
+    if (filters.supervisor_bureaux && filters.supervisor_bureaux.length > 0) {
+      const placeholders = filters.supervisor_bureaux.map(() => '?').join(',');
+      sql += ` AND d.bureau IN (${placeholders})`;
+      params.push(...filters.supervisor_bureaux);
+    }
+
+    sql += ' ORDER BY d.uploaded_at DESC';
+
+    if (filters.limit) {
+      sql += ' LIMIT ?';
+      params.push(filters.limit);
+    }
+
+    return queryAll(sql, params);
+  }
+
+  /**
+   * Get statistics (updated to include new statuses)
+   */
+  static getStats(filters = {}) {
+    let baseCondition = '1=1';
+    const params = [];
+    
+    if (filters.supervisor_bureaux && filters.supervisor_bureaux.length > 0) {
+      const placeholders = filters.supervisor_bureaux.map(() => '?').join(',');
+      baseCondition += ` AND bureau IN (${placeholders})`;
+      params.push(...filters.supervisor_bureaux);
+    }
+    
+    const stats = {
+      total: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition}`, params)?.count || 0,
+      pending: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition} AND status = 'pending'`, params)?.count || 0,
+      reviewing: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition} AND status = 'reviewing'`, params)?.count || 0,
+      rejected: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition} AND status = 'rejected_for_update'`, params)?.count || 0,
+      stored: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition} AND status = 'stored'`, params)?.count || 0,
+      processing: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition} AND status = 'processing'`, params)?.count || 0,
+      fields_extracted: queryOne(`SELECT COUNT(*) as count FROM documents WHERE ${baseCondition} AND status = 'fields_extracted'`, params)?.count || 0
+    };
+    
+    return stats;
+  }
+
 }
 
 module.exports = Document;
