@@ -14,6 +14,12 @@ interface DynamicFieldFormProps {
   documentType: string;
   initialFields?: Record<string, any>;
   onSuccess?: () => void;
+  renderButtons?: (props: {
+    onSave: () => void;
+    onSubmit: () => void;
+    isLoading: boolean;
+    isDirty: boolean;
+  }) => React.ReactNode;
 }
 
 interface FormField {
@@ -28,18 +34,15 @@ export function DynamicFieldForm({
   documentId, 
   documentType, 
   initialFields = {},
-  onSuccess 
+  onSuccess,
+  renderButtons
 }: DynamicFieldFormProps) {
   const { t } = useTranslation();
   const [formFields, setFormFields] = useState<FormField[]>([]);
   
-  // Fetch form schema for document type
   const { data: schemaData, isLoading: schemaLoading } = useFormSchema(documentType);
-  
-  // Mutation for saving fields
   const saveFieldsMutation = useSaveDocumentFields();
 
-  // React Hook Form
   const {
     register,
     handleSubmit,
@@ -49,14 +52,12 @@ export function DynamicFieldForm({
     defaultValues: initialFields
   });
 
-  // Load schema and set form fields
   useEffect(() => {
     if (schemaData?.data?.fields) {
       setFormFields(schemaData.data.fields.sort((a: FormField, b: FormField) => a.order - b.order));
     }
   }, [schemaData]);
 
-  // Update form when initialFields change (after OCR)
   useEffect(() => {
     if (initialFields && Object.keys(initialFields).length > 0) {
       Object.keys(initialFields).forEach(key => {
@@ -67,7 +68,6 @@ export function DynamicFieldForm({
 
   const onSave = async (data: any, submit: boolean = false) => {
     try {
-      // Convert form data to fields array format
       const fields = formFields.map(field => ({
         field_name: field.name,
         field_value: data[field.name] || '',
@@ -122,8 +122,8 @@ export function DynamicFieldForm({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Form Fields */}
+    <>
+      {/* Form Fields Only - No buttons here */}
       <div className="space-y-4">
         {formFields.map((field) => (
           <div key={field.name}>
@@ -136,7 +136,7 @@ export function DynamicFieldForm({
                 <textarea
                   {...register(field.name, { required: field.required })}
                   rows={4}
-                  className="w-full px-4 py-3 bg-bg-secondary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-gold-primary/50 focus:border-gold-primary resize-none"
+                  className="w-full px-4 py-3 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-gold-primary/50 focus:border-gold-primary resize-none"
                   placeholder={field.label}
                 />
               </div>
@@ -152,44 +152,55 @@ export function DynamicFieldForm({
         ))}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 pt-4 border-t border-border-primary sticky bottom-0 bg-bg-secondary pb-2">
-        <Button
-          variant="secondary"
-          size="md"
-          onClick={handleSave}
-          isLoading={saveFieldsMutation.isPending}
-          icon={<Save className="h-5 w-5" />}
-          disabled={!isDirty}
-          className="flex-1"
-        >
-          {t('common.save')}
-        </Button>
-        
-        <Button
-          variant="primary"
-          size="md"
-          onClick={handleSubmitForm}
-          isLoading={saveFieldsMutation.isPending}
-          icon={<Check className="h-5 w-5" />}
-          className="flex-1"
-        >
-          {t('common.submit')}
-        </Button>
-      </div>
+      {/* Render buttons externally if provided */}
+      {renderButtons && renderButtons({
+        onSave: handleSave,
+        onSubmit: handleSubmitForm,
+        isLoading: saveFieldsMutation.isPending,
+        isDirty
+      })}
 
-      {/* Info */}
-      <div className="text-xs text-text-muted">
-        {isDirty && (
-          <p className="flex items-center gap-2">
-            <span className="h-2 w-2 bg-warning rounded-full animate-pulse"></span>
-            {t('documents.unsavedChanges')}
-          </p>
-        )}
-        {!isDirty && (
-          <p className="text-success">{t('documents.allChangesSaved')}</p>
-        )}
-      </div>
-    </div>
+      {/* Default buttons if no renderButtons provided */}
+      {!renderButtons && (
+        <div className="mt-6 pt-4 border-t border-border-primary">
+          <div className="mb-3 text-xs">
+            {isDirty && (
+              <p className="flex items-center gap-2 text-warning">
+                <span className="h-2 w-2 bg-warning rounded-full animate-pulse"></span>
+                {t('documents.unsavedChanges')}
+              </p>
+            )}
+            {!isDirty && (
+              <p className="text-success">{t('documents.allChangesSaved')}</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={handleSave}
+              isLoading={saveFieldsMutation.isPending}
+              icon={<Save className="h-5 w-5" />}
+              disabled={!isDirty}
+              className="flex-1"
+            >
+              {t('common.save')}
+            </Button>
+            
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleSubmitForm}
+              isLoading={saveFieldsMutation.isPending}
+              icon={<Check className="h-5 w-5" />}
+              className="flex-1"
+            >
+              {t('common.submit')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
