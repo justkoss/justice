@@ -88,8 +88,17 @@ class Document {
     
     // Status filter
     if (filters.status) {
-      sql += ' AND d.status = ?';
-      params.push(filters.status);
+      if (filters.status.includes(',')) {
+        // Multiple statuses (comma-separated)
+        const statuses = filters.status.split(',').map(s => s.trim());
+        const placeholders = statuses.map(() => '?').join(',');
+        sql += ` AND d.status IN (${placeholders})`;
+        params.push(...statuses);
+      } else {
+        // Single status
+        sql += ' AND d.status = ?';
+        params.push(filters.status);
+      }
     }
     
     // Bureau filter
@@ -174,8 +183,15 @@ class Document {
     const params = [];
     
     if (filters.status) {
-      sql += ' AND status = ?';
-      params.push(filters.status);
+      if (filters.status.includes(',')) {
+        const statuses = filters.status.split(',').map(s => s.trim());
+        const placeholders = statuses.map(() => '?').join(',');
+        sql += ` AND status IN (${placeholders})`;
+        params.push(...statuses);
+      } else {
+        sql += ' AND status = ?';
+        params.push(filters.status);
+      }
     }
     
     if (filters.bureau) {
