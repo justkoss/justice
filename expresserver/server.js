@@ -16,6 +16,7 @@ const authRoutes = require('./src/routes/auth');
 const documentRoutes = require('./src/routes/documents');
 const treeRoutes = require('./src/routes/tree');
 const fieldsRoutes = require('./src/routes/fields');
+const usersRoutes = require('./src/routes/users');
 
 // Initialize Express app
 const app = express();
@@ -55,6 +56,7 @@ initDatabase().then(() => {
   // Note: In production, use nginx or similar for static file serving
   app.use('/files', express.static(path.join(__dirname, 'storage')));
   app.use('/api/documents', fieldsRoutes);
+  app.use('/api/users', usersRoutes);
 
   // 404 handler
   app.use(notFound);

@@ -58,7 +58,7 @@ export function Sidebar() {
       roles: ['admin', 'supervisor'], // Supervisors see assigned bureaus, admins see all
     },
     {
-      href: '/users',
+      href: '/dashboard/users',
       label: t('nav.users'),
       icon: <Users className="h-5 w-5" />,
       roles: ['admin'], // Only admin

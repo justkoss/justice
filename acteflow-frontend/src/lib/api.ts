@@ -159,6 +159,11 @@ export const api = {
   getFormSchema: (documentType: string) =>
     apiClient.get(`/api/documents/forms/schema/${documentType}`),
 
+  // User Stats
+  getUserStats: (id: number) =>
+    apiClient.get(`/api/users/${id}/stats`),
+
+
 };
 
 export default apiClient;
