@@ -12,6 +12,7 @@ export function LanguageSwitcher() {
 
   useEffect(() => {
     // Sync i18n with store
+    console.log('i18n test:', typeof i18n.changeLanguage);
     i18n.changeLanguage(language);
     
     // Update HTML attributes

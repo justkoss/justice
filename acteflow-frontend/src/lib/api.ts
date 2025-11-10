@@ -163,6 +163,8 @@ export const api = {
   getUserStats: (id: number) =>
     apiClient.get(`/api/users/${id}/stats`),
 
+  searchDocuments: (params?: any) =>
+    apiClient.get('/api/search', { params }),
 
 };
 

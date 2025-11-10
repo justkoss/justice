@@ -17,6 +17,7 @@ const documentRoutes = require('./src/routes/documents');
 const treeRoutes = require('./src/routes/tree');
 const fieldsRoutes = require('./src/routes/fields');
 const usersRoutes = require('./src/routes/users');
+const searchRoutes = require('./src/routes/search');
 
 // Initialize Express app
 const app = express();
@@ -57,6 +58,7 @@ initDatabase().then(() => {
   app.use('/files', express.static(path.join(__dirname, 'storage')));
   app.use('/api/documents', fieldsRoutes);
   app.use('/api/users', usersRoutes);
+  app.use('/api/search', searchRoutes);
 
   // 404 handler
   app.use(notFound);

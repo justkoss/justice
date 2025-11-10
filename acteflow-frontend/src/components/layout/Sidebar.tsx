@@ -64,7 +64,7 @@ export function Sidebar() {
       roles: ['admin'], // Only admin
     },
     {
-      href: '/search',
+      href: '/dashboard/search',
       label: t('nav.search'),
       icon: <Search className="h-5 w-5" />,
       roles: ['admin', 'supervisor', 'agent'], // All roles
