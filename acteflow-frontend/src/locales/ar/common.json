@@ -299,5 +299,67 @@
     "searchDeleted": "تم حذف البحث",
     "failedToSave": "فشل حفظ البحث",
     "failedToDelete": "فشل الحذف"
+  },
+  "acts": {
+    "title": "الوثائق",
+    "subtitle": "إدارة جميع وثائق الحالة المدنية",
+    "documentsCount": "وثائق",
+    "activityLog": "سجل النشاط",
+    "actionsRecorded": "إجراءات مسجلة",
+    "noActivityYet": "لم يتم تسجيل أي نشاط لهذه الوثيقة",
+    "showActivityLog": "إظهار السجل",
+    "hideActivityLog": "إخفاء السجل",
+    
+    "actions": {
+      "document_uploaded": "تم تحميل الوثيقة",
+      "document_reviewed_started": "بدأت المراجعة",
+      "document_approved": "تمت الموافقة على الوثيقة",
+      "document_rejected": "تم رفض الوثيقة",
+      "document_processing_started": "بدأت المعالجة",
+      "document_processing_completed": "اكتملت المعالجة",
+      "document_downloaded": "تم تنزيل الوثيقة",
+      "document_updated": "تم تحديث الوثيقة",
+      "document_deleted": "تم حذف الوثيقة",
+      "document_viewed": "تم عرض الوثيقة",
+      "document_fields_updated": "تم تحديث الحقول",
+      "user_login": "تسجيل دخول المستخدم",
+      "user_logout": "تسجيل خروج المستخدم",
+      "user_created": "تم إنشاء المستخدم",
+      "user_updated": "تم تحديث المستخدم",
+      "user_deleted": "تم حذف المستخدم",
+      "search_performed": "تم إجراء البحث",
+      "system_error": "خطأ في النظام"
+    },
+    
+    "actionTypes": {
+      "uploaded": "التحميل",
+      "reviewed": "المراجعة",
+      "approved": "الموافقة",
+      "rejected": "الرفض",
+      "processing": "المعالجة",
+      "completed": "مكتمل",
+      "downloaded": "التنزيل",
+      "updated": "التحديث",
+      "deleted": "الحذف",
+      "viewed": "العرض",
+      "login": "تسجيل الدخول",
+      "logout": "تسجيل الخروج",
+      "created": "الإنشاء",
+      "performed": "تم التنفيذ",
+      "started": "بدأ"
+    },
+    
+    "statistics": {
+      "title": "إحصائيات النشاط",
+      "totalActions": "إجمالي الإجراءات",
+      "activeUsers": "المستخدمون النشطون",
+      "affectedEntities": "الكيانات المتأثرة",
+      "topActions": "الإجراءات الرئيسية",
+      "activityOverTime": "النشاط عبر الزمن"
+    }
+  },
+   "status": {
+    "processing": "قيد المعالجة",
+    "fields_extracted": "تم استخراج الحقول"
   }
 }

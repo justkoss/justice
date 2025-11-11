@@ -299,5 +299,67 @@
     "searchDeleted": "Recherche supprimée",
     "failedToSave": "Échec de la sauvegarde de la recherche",
     "failedToDelete": "Échec de la suppression"
+  }, 
+  "acts": {
+    "title": "Actes",
+    "subtitle": "Gérer tous les actes d'état civil",
+    "documentsCount": "actes",
+    "activityLog": "Journal d'activité",
+    "actionsRecorded": "actions enregistrées",
+    "noActivityYet": "Aucune activité enregistrée pour ce document",
+    "showActivityLog": "Afficher le journal",
+    "hideActivityLog": "Masquer le journal",
+    
+    "actions": {
+      "document_uploaded": "Document téléchargé",
+      "document_reviewed_started": "Révision démarrée",
+      "document_approved": "Document approuvé",
+      "document_rejected": "Document rejeté",
+      "document_processing_started": "Traitement démarré",
+      "document_processing_completed": "Traitement terminé",
+      "document_downloaded": "Document téléchargé",
+      "document_updated": "Document mis à jour",
+      "document_deleted": "Document supprimé",
+      "document_viewed": "Document consulté",
+      "document_fields_updated": "Champs mis à jour",
+      "user_login": "Connexion utilisateur",
+      "user_logout": "Déconnexion utilisateur",
+      "user_created": "Utilisateur créé",
+      "user_updated": "Utilisateur mis à jour",
+      "user_deleted": "Utilisateur supprimé",
+      "search_performed": "Recherche effectuée",
+      "system_error": "Erreur système"
+    },
+    
+    "actionTypes": {
+      "uploaded": "Téléchargement",
+      "reviewed": "Révision",
+      "approved": "Approbation",
+      "rejected": "Rejet",
+      "processing": "Traitement",
+      "completed": "Terminé",
+      "downloaded": "Téléchargement",
+      "updated": "Mise à jour",
+      "deleted": "Suppression",
+      "viewed": "Consultation",
+      "login": "Connexion",
+      "logout": "Déconnexion",
+      "created": "Création",
+      "performed": "Effectué",
+      "started": "Démarré"
+    },
+    
+    "statistics": {
+      "title": "Statistiques d'activité",
+      "totalActions": "Total des actions",
+      "activeUsers": "Utilisateurs actifs",
+      "affectedEntities": "Entités affectées",
+      "topActions": "Actions principales",
+      "activityOverTime": "Activité dans le temps"
+    }
+  },
+  "status": {
+    "processing": "En traitement",
+    "fields_extracted": "Champs extraits"
   }
 }
