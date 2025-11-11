@@ -53,46 +53,56 @@ async function handleLogin() {
   hideMessages();
   
   try {
-    // Step 1: Check if user exists locally
+    setLoading(true);
+    showStatus('Vérification de la connexion au serveur...');
+
+    const isOnline = await ipcRenderer.invoke('check-server-health', serverUrl);
     const hasLocalAuth = await ipcRenderer.invoke('check-local-auth');
-    
-    if (hasLocalAuth) {
-      // Try local authentication first
-      showStatus(i18n.t('login.status.localAuth'));
-      const localResult = await ipcRenderer.invoke('local-login', username, password);
-      
-      if (localResult.success) {
-        showStatus(i18n.t('login.status.offlineSuccess'));
-        setTimeout(() => {
-          ipcRenderer.invoke('load-main-app');
-        }, 1000);
+
+    if (isOnline) {
+      // 🌐 ONLINE MODE
+      showStatus(i18n.t('login.status.serverAttempt'));
+      const serverResult = await ipcRenderer.invoke('server-login', username, password, serverUrl);
+
+      if (serverResult.success) {
+        showStatus(i18n.t('login.status.serverSuccess'));
+        setTimeout(() => ipcRenderer.invoke('load-main-app'), 1000);
+      } else if (hasLocalAuth) {
+        // fallback if server login failed but we have local credentials
+        showStatus(i18n.t('login.status.serverFailedFallback'));
+        const localResult = await ipcRenderer.invoke('local-login', username, password);
+        if (localResult.success) {
+          showStatus(i18n.t('login.status.offlineSuccess') );
+          setTimeout(() => ipcRenderer.invoke('load-main-app'), 1000);
+        } else {
+          showError(serverResult.message || i18n.t('login.errors.loginFailed'));
+        }
+      } else {
+        showError(serverResult.message || i18n.t('login.errors.loginFailed'));
+      }
+    } else {
+      // 📴 OFFLINE MODE
+      showStatus(i18n.t('login.status.offlineMode') );
+      if (!hasLocalAuth) {
+        showError(i18n.t('login.errors.noLocalAccount'));
         return;
       }
-      
-      // Local auth failed, try server
-      showStatus(i18n.t('login.status.localFailed'));
-    } else {
-      showStatus(i18n.t('login.status.firstLogin'));
+      const localResult = await ipcRenderer.invoke('local-login', username, password);
+      if (localResult.success) {
+        showStatus(i18n.t('login.status.offlineSuccess') );
+        setTimeout(() => ipcRenderer.invoke('load-main-app'), 1000);
+      } else {
+        showError(localResult.message || i18n.t('login.errors.loginFailed'));
+      }
     }
-    
-    // Step 2: Try server authentication
-    const serverResult = await ipcRenderer.invoke('server-login', username, password, serverUrl);
-    
-    if (serverResult.success) {
-      showStatus(i18n.t('login.status.serverSuccess'));
-      setTimeout(() => {
-        ipcRenderer.invoke('load-main-app');
-      }, 1500);
-    } else {
-      showError(serverResult.message || i18n.t('login.errors.loginFailed'));
-    }
-    
+
   } catch (error) {
     console.error('Erreur de connexion:', error);
-    showError(i18n.t('login.errors.connectionError'));
+    showError(i18n.t('login.errors.connectionError') + `: ${error.message}`);
   } finally {
     setLoading(false);
   }
+
 }
 
 // UI Helper Functions

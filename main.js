@@ -176,6 +176,18 @@ function startFolderWatch(folderPath) {
     });
 }
 
+async function isServerOnline(url) {
+  try {
+    const res = await fetch(`${url}/api/health`, { method: 'GET', timeout: 4000 });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.status === 'ok' || data.success === true;
+  } catch {
+    return false;
+  }
+}
+
+
 app.whenReady().then(async () => {
   await initDatabase();
   createWindow();
@@ -232,6 +244,20 @@ ipcMain.handle('local-login', async (event, username, password) => {
     };
   } catch (error) {
     return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('check-server-health', async (event, url) => {
+  try {
+    const res = await fetch(`${url}/api/health`, { method: 'GET' });
+    if (!res.ok) return false;
+    const data = await res.json();
+    // Accept either "ok" or "OK" or a success flag
+    const status = String(data.status || '').toLowerCase();
+    return status === 'ok' || data.success === true;
+  } catch (error) {
+    console.error('Health check failed:', error.message);
+    return false;
   }
 });
 
