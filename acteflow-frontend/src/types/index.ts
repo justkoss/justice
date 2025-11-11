@@ -73,6 +73,23 @@ export interface DocumentHistory {
   created_at: string;
 }
 
+// Activity Log types
+export interface ActivityLogEntry {
+  id: number;
+  user_id: number;
+  action: string;
+  entity_type: string;
+  entity_id?: number;
+  details?: string;
+  ip_address?: string;
+  user_agent?: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  username: string;
+  user_full_name?: string;
+  user_role: string;
+}
+
 // Notification types
 export interface Notification {
   id: number;

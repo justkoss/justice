@@ -166,6 +166,53 @@ export const api = {
   searchDocuments: (params?: any) =>
     apiClient.get('/api/search', { params }),
 
+  getSearchSuggestions: (type: string, query: string, limit?: number) =>
+    apiClient.get('/api/search/suggestions', { params: { type, query, limit } }),
+
+  getPopularSearches: () =>
+    apiClient.get('/api/search/popular'),
+
+  getSearchFacets: (query?: string) =>
+    apiClient.get('/api/search/facets', { params: query ? { query } : undefined }),
+  
+  // Activity Logs
+  logActivity: (activityData: {
+    action: string;
+    entity_type: string;
+    entity_id?: number;
+    details?: string;
+    metadata?: Record<string, any>;
+  }) =>
+    apiClient.post('/api/activity-logs', activityData),
+
+  getActivityLogs: (filters?: {
+    user_id?: number;
+    entity_type?: string;
+    entity_id?: number;
+    action?: string;
+    date_from?: string;
+    date_to?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    apiClient.get('/api/activity-logs', { params: filters }),
+
+  getDocumentActivityLogs: (documentId: number) =>
+    apiClient.get(`/api/activity-logs/document/${documentId}`),
+
+  getRecentActivity: (limit?: number) =>
+    apiClient.get('/api/activity-logs/recent', { params: { limit } }),
+
+  getUserActivitySummary: (userId: number, date_from: string, date_to: string) =>
+    apiClient.get(`/api/activity-logs/user/${userId}/summary`, {
+      params: { date_from, date_to }
+    }),
+
+  getActivityStatistics: (date_from: string, date_to: string) =>
+    apiClient.get('/api/activity-logs/statistics', {
+      params: { date_from, date_to }
+    }),
+
 };
 
 export default apiClient;

@@ -46,7 +46,7 @@ export function Sidebar() {
       roles: ['admin', 'supervisor', 'agent'], // All roles
     },
     {
-      href: '/dashboard/review',
+      href: '/dashboard/acts',
       label: t('nav.review'),
       icon: <ClipboardCheck className="h-5 w-5" />,
       roles: ['admin', 'supervisor'], // Only supervisors and admins
