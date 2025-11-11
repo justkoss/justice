@@ -10,6 +10,7 @@ import { DocumentViewer } from '@/components/features/DocumentViewer';
 import { ActivityLog } from '@/components/features/ActivityLog';
 import { useDocuments, useDocument, useStartReview } from '@/hooks/useDocuments';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
+import { useRouter } from 'next/navigation';
 import { 
   FileText, 
   Search, 
@@ -37,7 +38,7 @@ export default function ActsPage() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showActivityLog, setShowActivityLog] = useState(false);
-
+  const router = useRouter();
   const { data: selectedDocument, isLoading: isDocumentLoading } = useDocument(selectedDocumentId);
   const startReview = useStartReview();
 
@@ -46,6 +47,9 @@ export default function ActsPage() {
     status: activeTab,
     limit: 50,
   });
+  const handleDocumentProcessing = (documentId: number) => {
+    router.push(`/dashboard/processing?id=${documentId}`);
+  };
 
   // Fetch activity logs for selected document
   const { data: activityLogsData } = useActivityLogs({
@@ -62,9 +66,14 @@ export default function ActsPage() {
   const handleStartReview = async (doc: Document) => {
     if (doc.status === 'pending') {
       await startReview.mutateAsync(doc.id);
+      setSelectedDocumentId(doc.id);
+      setShowActivityLog(false);
+    } else if (doc.status === 'processing') {
+      handleDocumentProcessing(doc.id);
+    } else {
+      setSelectedDocumentId(doc.id);
+      setShowActivityLog(false);
     }
-    setSelectedDocumentId(doc.id);
-    setShowActivityLog(false);
   };
 
   const handleReviewComplete = () => {
