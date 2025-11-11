@@ -12,6 +12,7 @@
     "edit": "Modifier",
     "search": "Rechercher",
     "filter": "Filtrer",
+    "filters": "Filtres",
     "export": "Exporter",
     "import": "Importer",
     "actions": "Actions",
@@ -30,7 +31,8 @@
     "select": "Sélectionner",
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
-    "rotate": "Rotation"
+    "rotate": "Rotation",
+    "errorLoadingData": "Erreur lors du chargement des données"
   },
   "auth": {
     "login": "Connexion",
@@ -202,7 +204,22 @@
     "deselectAll": "Tout désélectionner",
     "selected": "sélectionné(s)",
     "bureauAssignmentInfo": "Le superviseur ne pourra voir que les documents des bureaux assignés.",
-    "noUsers": "Aucun utilisateur trouvé"
+    "noUsers": "Aucun utilisateur trouvé",
+    "viewLogs": "Voir les logs",
+    "activityLogs": "Logs d'activité",
+    "allActions": "Toutes les actions",
+    "allEntityTypes": "Tous les types",
+    "totalLogs": "Total des logs",
+    "noActivityLogsYet": "Aucun log d'activité pour cet utilisateur",
+    "noLogsMatchFilter": "Aucun log ne correspond aux filtres",
+    "entityType": {
+      "document": "Document",
+      "user": "Utilisateur",
+      "system": "Système"
+    },
+    "entityId": "ID d'entité",
+    "metadata": "Métadonnées",
+    "showingLogs": "Affichage de {{from}}-{{to}} sur {{total}} logs"
   },
   "roles": {
     "agent": "Agent",

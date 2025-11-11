@@ -3,6 +3,7 @@ const User = require('../models/User');
 const path = require('path');
 const fs = require('fs');
 const { STORED_DIR, PENDING_DIR } = require('../config/multer');
+const logger = require('../utils/logger');
 
 /**
  * Sync document from desktop app
@@ -54,6 +55,10 @@ async function syncDocument(req, res) {
     const document = Document.create(documentData);
     // console.log('Document created with ID:', document.id);
     console.log('Full document record:', document);
+    
+    // Log the upload action
+    logger.logDocumentUpload(req, document.id, 
+      `Uploaded ${document.original_filename} to ${document.bureau}/${document.registre_type}/${document.year}`);
     
     console.log(`✅ Document synchronized: ${document?.original_filename || "no_name.pdf" } by ${req.user.username}`);
     
@@ -176,6 +181,9 @@ async function getDocument(req, res) {
       }
     }
     
+    // Log document view (optional - can be verbose)
+    logger.logDocumentView(req, document.id);
+    
     res.json({
       success: true,
       document
@@ -225,6 +233,10 @@ async function startReview(req, res) {
     }
     
     const updatedDocument = Document.startReview(req.params.id, req.user.id);
+    
+    // Log review start
+    logger.logDocumentReviewStart(req, document.id, 
+      `Started reviewing ${document.acte_number} from ${document.bureau}`);
     
     res.json({
       success: true,
@@ -284,6 +296,16 @@ async function approveDocument(req, res) {
     
     const updatedDocument = Document.approve(req.params.id, req.user.id, storedPath);
     
+    // Log approval
+    logger.logDocumentApprove(req, document.id, 
+      `Approved ${document.acte_number} - moved to ${storedPath}`, 
+      { 
+        bureau: document.bureau, 
+        registre_type: document.registre_type, 
+        year: document.year,
+        virtual_path: storedPath 
+      });
+    
     console.log(`✅ Document approved: ${document.acte_number} by ${req.user.username}`);
     
     res.json({
@@ -340,6 +362,15 @@ async function rejectDocument(req, res) {
       error_type,
       message
     });
+    
+    // Log rejection
+    logger.logDocumentReject(req, document.id, 
+      `Rejected ${document.acte_number}: ${message}`, 
+      { 
+        error_type, 
+        bureau: document.bureau, 
+        registre_type: document.registre_type 
+      });
     
     console.log(`❌ Document rejected: ${document.acte_number} by ${req.user.username}`);
     

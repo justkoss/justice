@@ -12,6 +12,7 @@
     "edit": "تعديل",
     "search": "بحث",
     "filter": "تصفية",
+    "filters": "الفلاتر",
     "export": "تصدير",
     "import": "استيراد",
     "actions": "إجراءات",
@@ -30,7 +31,8 @@
     "select": "اختر",
     "zoomIn": "تكبير",
     "zoomOut": "تصغير",
-    "rotate": "تدوير"
+    "rotate": "تدوير",
+    "errorLoadingData": "خطأ في تحميل البيانات"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -202,7 +204,22 @@
     "deselectAll": "إلغاء تحديد الكل",
     "selected": "محدد",
     "bureauAssignmentInfo": "لن يتمكن المشرف من رؤية سوى مستندات المكاتب المعينة.",
-    "noUsers": "لم يتم العثور على مستخدمين"
+    "noUsers": "لم يتم العثور على مستخدمين",
+    "viewLogs": "عرض السجلات",
+    "activityLogs": "سجلات النشاط",
+    "allActions": "جميع الإجراءات",
+    "allEntityTypes": "جميع الأنواع",
+    "totalLogs": "إجمالي السجلات",
+    "noActivityLogsYet": "لا توجد سجلات نشاط لهذا المستخدم",
+    "noLogsMatchFilter": "لا توجد سجلات تطابق الفلاتر",
+    "entityType": {
+      "document": "وثيقة",
+      "user": "مستخدم",
+      "system": "النظام"
+    },
+    "entityId": "معرف الكيان",
+    "metadata": "البيانات الوصفية",
+    "showingLogs": "عرض {{from}}-{{to}} من {{total}} سجل"
   },
   "roles": {
     "agent": "وكيل",

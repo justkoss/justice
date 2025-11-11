@@ -1,4 +1,4 @@
-const { query, queryOne, queryAll, run } = require('../config/database');
+const { query, queryOne, queryAll, runQuery } = require('../config/database');
 
 /**
  * ActivityLog Model
@@ -37,7 +37,7 @@ class ActivityLog {
 
     const metadataJson = typeof metadata === 'string' ? metadata : JSON.stringify(metadata);
 
-    const result = run(sql, [
+    const result = runQuery(sql, [
       user_id,
       action,
       entity_type,
@@ -226,7 +226,7 @@ class ActivityLog {
       WHERE created_at < datetime('now', '-' || ? || ' days')
     `;
 
-    return run(sql, [daysToKeep]);
+    return runQuery(sql, [daysToKeep]);
   }
 }
 

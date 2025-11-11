@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { UserLogsModal } from '@/components/features/UserLogsModal';
 import { 
   Edit, 
   Trash2, 
@@ -13,7 +14,8 @@ import {
   Mail,
   Phone,
   Calendar,
-  MoreVertical
+  MoreVertical,
+  Activity
 } from 'lucide-react';
 import { formatDateTime, getRoleColor } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -32,6 +34,18 @@ export function UserTable({ users, onEdit, onDelete, onAssignBureaux, isLoading 
   const [sortBy, setSortBy] = useState<'username' | 'role' | 'created_at'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [logsModalOpen, setLogsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const handleViewLogs = (user: User) => {
+    setSelectedUser(user);
+    setLogsModalOpen(true);
+  };
+
+  const handleCloseLogsModal = () => {
+    setLogsModalOpen(false);
+    setSelectedUser(null);
+  };
 
   const sortedUsers = [...users].sort((a, b) => {
     let comparison = 0;
@@ -171,6 +185,13 @@ export function UserTable({ users, onEdit, onDelete, onAssignBureaux, isLoading 
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewLogs(user)}
+                      icon={<Activity className="h-4 w-4" />}
+                      title={t('users.viewLogs')}
+                    />
                     {user.role === 'supervisor' && onAssignBureaux && (
                       <Button
                         variant="ghost"
@@ -232,6 +253,16 @@ export function UserTable({ users, onEdit, onDelete, onAssignBureaux, isLoading 
                 
                 {openMenuId === user.id && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-bg-secondary border border-border-primary rounded-lg shadow-xl z-10">
+                    <button
+                      onClick={() => {
+                        handleViewLogs(user);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary flex items-center gap-2"
+                    >
+                      <Activity className="h-4 w-4" />
+                      {t('users.viewLogs')}
+                    </button>
                     <button
                       onClick={() => {
                         onEdit(user);
@@ -301,6 +332,13 @@ export function UserTable({ users, onEdit, onDelete, onAssignBureaux, isLoading 
           onClick={() => setOpenMenuId(null)}
         />
       )}
+
+      {/* User Logs Modal */}
+      <UserLogsModal
+        isOpen={logsModalOpen}
+        onClose={handleCloseLogsModal}
+        user={selectedUser}
+      />
     </Card>
   );
 }

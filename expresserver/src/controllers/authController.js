@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const { generateToken, generateRefreshToken } = require('../middleware/auth');
 const { runQuery } = require('../config/database');
+const logger = require('../utils/logger');
 
 /**
  * Login endpoint - Compatible with desktop app
@@ -21,6 +22,11 @@ async function login(req, res) {
     const result = User.authenticate(username, password);
     
     if (!result.success) {
+      // Log failed login attempt
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+      logger.logAuthFailure(username, result.message, ipAddress, userAgent);
+      
       return res.status(401).json(result);
     }
     
@@ -36,6 +42,16 @@ async function login(req, res) {
       INSERT INTO login_sessions (user_id, token, ip_address, user_agent)
       VALUES (?, ?, ?, ?)
     `, [result.user.id, token, ipAddress, userAgent]);
+    
+    // Log successful login
+    // Create a temporary req object with user for logging
+    const tempReq = { 
+      ...req, 
+      user: result.user,
+      ip: ipAddress,
+      get: (header) => req.headers[header.toLowerCase()]
+    };
+    logger.logUserLogin(tempReq, result.user.id, username);
     
     console.log(`✅ User logged in: ${username} (${result.user.role})`);
     
@@ -144,6 +160,9 @@ async function logout(req, res) {
         WHERE token = ?
       `, [token]);
     }
+    
+    // Log logout
+    logger.logUserLogout(req, req.user.id, req.user.username);
     
     console.log(`✅ User logged out: ${req.user.username}`);
     

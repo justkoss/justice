@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { runQuery } = require('../config/database');
+const logger = require('../utils/logger');
 
 /**
  * Get all users with filters
@@ -130,6 +131,9 @@ async function createUser(req, res) {
 
     const { password: _, ...userWithoutPassword } = user;
 
+    // Log user creation
+    logger.logUserCreate(req, user.id, username);
+
     console.log(`✅ User created: ${username} (${role}) by ${req.user.username}`);
 
     res.status(201).json({
@@ -195,6 +199,17 @@ async function updateUser(req, res) {
 
     const { password: _, ...userWithoutPassword } = updatedUser;
 
+    // Log user update
+    const changes = {};
+    if (email) changes.email = email;
+    if (full_name) changes.full_name = full_name;
+    if (phone) changes.phone = phone;
+    if (role) changes.role = role;
+    if (status) changes.status = status;
+    if (password) changes.password_changed = true;
+    
+    logger.logUserUpdate(req, userId, updatedUser.username, changes);
+
     console.log(`✅ User updated: ${updatedUser.username} by ${req.user.username}`);
 
     res.json({
@@ -238,6 +253,9 @@ async function deleteUser(req, res) {
 
     // Soft delete (set status to inactive)
     User.delete(userId);
+
+    // Log user deletion
+    logger.logUserDelete(req, userId, user.username);
 
     console.log(`✅ User deleted: ${user.username} by ${req.user.username}`);
 
@@ -287,6 +305,9 @@ async function assignBureaus(req, res) {
 
     // Assign bureaux
     const assignedBureaux = User.assignBureaus(userId, bureaux);
+
+    // Log bureau assignment
+    logger.logUserBureauAssign(req, userId, user.username, bureaux);
 
     console.log(`✅ Bureaux assigned to ${user.username}: ${bureaux.join(', ')}`);
 

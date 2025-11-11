@@ -1,6 +1,7 @@
 const Document = require('../models/Document');
 const User = require('../models/User');
 const { queryAll, queryOne } = require('../config/database');
+const logger = require('../utils/logger');
 
 /**
  * Advanced document search
@@ -242,6 +243,16 @@ async function advancedSearch(req, res) {
     // Calculate pagination info
     const totalPages = Math.ceil(total / limitNum);
     const hasMore = pageNum < totalPages;
+
+    // Log the search
+    logger.logSearch(req, query || '', {
+      bureau,
+      registre_type,
+      year,
+      status,
+      agent_name,
+      supervisor_name
+    }, total);
 
     res.json({
       success: true,
