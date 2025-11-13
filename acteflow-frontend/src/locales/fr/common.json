@@ -378,5 +378,122 @@
   "status": {
     "processing": "En traitement",
     "fields_extracted": "Champs extraits"
+  },
+  "inventory": {
+    "title": "Inventaire",
+    "subtitle": "Comparez l'inventaire attendu avec les documents réels",
+    "backToList": "Retour à la liste",
+    "upload": {
+      "title": "Télécharger un inventaire Excel",
+      "selectFile": "Sélectionner un fichier",
+      "preview": "Aperçu",
+      "records": "enregistrements",
+      "uploadButton": "Télécharger",
+      "uploading": "Téléchargement...",
+      "success": "enregistrements trouvés dans le fichier",
+      "errorInvalidFile": "Veuillez sélectionner un fichier Excel (.xlsx ou .xls)",
+      "errorParsing": "Erreur lors de la lecture du fichier Excel",
+      "errorNoRecords": "Aucun enregistrement à télécharger",
+      "errorUpload": "Erreur lors du téléchargement"
+    },
+    "batches": {
+      "title": "Inventaires téléchargés",
+      "empty": "Aucun inventaire téléchargé",
+      "uploadedOn": "Inventaire du",
+      "uploadedBy": "Téléchargé par",
+      "recordCount": "enregistrements",
+      "actions": {
+        "comparison": "Comparaison",
+        "tree": "Arbre",
+        "delete": "Supprimer"
+      },
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cet inventaire ?",
+      "deleteSuccess": "Inventaire supprimé avec succès",
+      "deleteError": "Erreur lors de la suppression"
+    },
+    "table": {
+      "bureau": "Bureau",
+      "type": "Type",
+      "year": "Année",
+      "registreNumber": "N° Registre",
+      "acteNumber": "N° Acte",
+      "uploadedBy": "Téléchargé par",
+      "date": "Date",
+      "showing": "Affichage de",
+      "of": "sur",
+      "andMore": "et {count} autres enregistrements"
+    },
+    "comparison": {
+      "title": "Comparaison",
+      "summary": {
+        "totalInventory": "Total Inventaire",
+        "totalDocuments": "Total Documents",
+        "matched": "Correspondants",
+        "missing": "Manquants",
+        "extra": "En trop",
+        "matchRate": "Taux de correspondance"
+      },
+      "tabs": {
+        "matched": "Correspondants",
+        "missing": "Manquants",
+        "extra": "En trop"
+      },
+      "empty": {
+        "matched": "Aucune correspondance",
+        "missing": "Aucun document manquant",
+        "extra": "Aucun document en trop"
+      },
+      "noData": "Aucune donnée disponible"
+    },
+    "tree": {
+      "title": "Vue hiérarchique de l'inventaire",
+      "subtitle": "Explorez la structure de l'inventaire avec les statistiques à chaque niveau : Bureau → Type → Année → Registre",
+      "legend": {
+        "inventory": "Inventaire",
+        "actual": "Documents réels",
+        "matched": "Correspondants",
+        "missing": "Manquants",
+        "extra": "En trop"
+      },
+      "noData": "Aucune donnée d'arbre disponible",
+      "stats": {
+        "inventory": "Inventaire",
+        "actual": "Réel",
+        "matched": "OK",
+        "missing": "Manque",
+        "extra": "Trop",
+        "rate": "Taux"
+      }
+    },
+    "status": {
+      "matched": "Correspondant",
+      "missing": "Manquant",
+      "extra": "En trop",
+      "pending": "En attente"
+    },
+    "registreTypes": {
+      "naissances": "Naissances",
+      "deces": "Décès",
+      "mariages": "Mariages",
+      "divorces": "Divorces",
+      "transcriptions": "Transcriptions"
+    },
+    "messages": {
+      "loading": "Chargement...",
+      "uploadSuccess": "Inventaire téléchargé avec succès",
+      "compareSuccess": "Comparaison effectuée",
+      "error": "Une erreur s'est produite",
+      "noResults": "Aucun résultat"
+    },
+    "buttons": {
+      "upload": "Télécharger",
+      "compare": "Comparer",
+      "viewTree": "Voir l'arbre",
+      "export": "Exporter",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "apply": "Appliquer"
+    }
   }
 }

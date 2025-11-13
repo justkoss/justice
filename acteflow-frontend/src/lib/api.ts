@@ -213,6 +213,107 @@ export const api = {
       params: { date_from, date_to }
     }),
 
+
 };
+export interface InventoryRecord {
+  id?: number;
+  bureau: string;
+  registreType: string;
+  year: number;
+  registreNumber: string;
+  acteNumber: string;
+  uploadBatchId?: string;
+  uploadedBy?: number;
+  uploadedAt?: string;
+  notes?: string;
+}
+
+export interface InventoryBatch {
+  upload_batch_id: string;
+  record_count: number;
+  uploaded_at: string;
+  uploaded_by: number;
+  uploaded_by_username: string;
+}
+
+export interface ComparisonSummary {
+  totalInventory: number;
+  totalDocuments: number;
+  matched: number;
+  missing: number;
+  extra: number;
+  matchRate: string;
+}
+
+export interface ComparisonResult {
+  summary: ComparisonSummary;
+  matched: any[];
+  missing: any[];
+  extra: any[];
+}
+
+export interface TreeStats {
+  inventory: number;
+  actual: number;
+  matched: number;
+  missing: number;
+  extra: number;
+  matchRate: string;
+}
+
+export interface TreeNode {
+  name: string;
+  stats: TreeStats;
+  types?: { [key: string]: TreeNode };
+  years?: { [key: string]: TreeNode };
+  registres?: { [key: string]: TreeNode };
+}
+
+// Upload inventory from Excel
+export const uploadInventory = async (records: InventoryRecord[]) => {
+  const response = await apiClient.post('/api/inventory/upload', { records });
+  return response.data;
+};
+
+// Get all inventory batches
+export const getInventoryBatches = async (): Promise<InventoryBatch[]> => {
+  const response = await apiClient.get('/api/inventory/batches');
+  return response.data.data;
+};
+
+// Get inventory by batch ID
+export const getInventoryByBatch = async (batchId: string): Promise<InventoryRecord[]> => {
+  const response = await apiClient.get(`/api/inventory/batches/${batchId}`);
+  return response.data.data;
+};
+
+// Delete inventory batch
+export const deleteInventoryBatch = async (batchId: string) => {
+  const response = await apiClient.delete(`/api/inventory/batches/${batchId}`);
+  return response.data;
+};
+
+// Compare inventory with actual documents
+export const compareInventory = async (
+  batchId: string,
+  filters?: { bureau?: string; registreType?: string; year?: number }
+): Promise<ComparisonResult> => {
+  const params = new URLSearchParams();
+  if (filters?.bureau) params.append('bureau', filters.bureau);
+  if (filters?.registreType) params.append('registreType', filters.registreType);
+  if (filters?.year) params.append('year', filters.year.toString());
+
+  const response = await apiClient.get(
+    `/api/inventory/compare/${batchId}?${params.toString()}`
+  );
+  return response.data.data;
+};
+
+// Get tree comparison statistics
+export const getTreeComparison = async (batchId: string): Promise<{ [key: string]: TreeNode }> => {
+  const response = await apiClient.get(`/api/inventory/tree/${batchId}`);
+  return response.data.data;
+};
+
 
 export default apiClient;

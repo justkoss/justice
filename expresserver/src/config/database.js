@@ -210,6 +210,31 @@ function createTables() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at)`);
 
+  // Inventory table
+    
+  db.run(`
+    CREATE TABLE IF NOT EXISTS inventory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bureau TEXT NOT NULL,
+      registre_type TEXT NOT NULL,
+      year INTEGER NOT NULL,
+      registre_number TEXT NOT NULL,
+      acte_number TEXT NOT NULL,
+      upload_batch_id TEXT NOT NULL,
+      uploaded_by INTEGER,
+      uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      notes TEXT,
+      FOREIGN KEY (uploaded_by) REFERENCES users(id),
+      UNIQUE(bureau, registre_type, year, registre_number, acte_number, upload_batch_id)
+    )
+  `);
+  
+  // Create indexes
+  db.run('CREATE INDEX IF NOT EXISTS idx_inventory_bureau ON inventory(bureau)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_inventory_type ON inventory(registre_type)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_inventory_year ON inventory(year)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_inventory_batch ON inventory(upload_batch_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_inventory_acte ON inventory(acte_number)');
 }
 
 /**

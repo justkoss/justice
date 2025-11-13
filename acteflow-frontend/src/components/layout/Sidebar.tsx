@@ -40,10 +40,10 @@ export function Sidebar() {
       roles: ['admin'], // Only admin can see dashboard analytics
     },
     {
-      href: '/dashboard/documents',
-      label: t('nav.documents'),
+      href: '/dashboard/inventory',
+      label: t('inventory.title'),
       icon: <FileText className="h-5 w-5" />,
-      roles: ['admin', 'supervisor', 'agent'], // All roles
+      roles: ['admin'], // All roles
     },
     {
       href: '/dashboard/acts',

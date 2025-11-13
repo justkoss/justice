@@ -378,5 +378,122 @@
    "status": {
     "processing": "قيد المعالجة",
     "fields_extracted": "تم استخراج الحقول"
+  },
+  "inventory": {
+    "title": "الجرد",
+    "subtitle": "قارن الجرد المتوقع مع الوثائق الفعلية",
+    "backToList": "العودة إلى القائمة",
+    "upload": {
+      "title": "تحميل جرد Excel",
+      "selectFile": "اختر ملف",
+      "preview": "معاينة",
+      "records": "سجلات",
+      "uploadButton": "تحميل",
+      "uploading": "جاري التحميل...",
+      "success": "سجلات موجودة في الملف",
+      "errorInvalidFile": "الرجاء تحديد ملف Excel (.xlsx أو .xls)",
+      "errorParsing": "خطأ في قراءة ملف Excel",
+      "errorNoRecords": "لا توجد سجلات للتحميل",
+      "errorUpload": "خطأ أثناء التحميل"
+    },
+    "batches": {
+      "title": "الجرد المحمل",
+      "empty": "لا يوجد جرد محمل",
+      "uploadedOn": "جرد",
+      "uploadedBy": "تم التحميل بواسطة",
+      "recordCount": "سجلات",
+      "actions": {
+        "comparison": "المقارنة",
+        "tree": "الشجرة",
+        "delete": "حذف"
+      },
+      "deleteConfirm": "هل أنت متأكد من حذف هذا الجرد؟",
+      "deleteSuccess": "تم حذف الجرد بنجاح",
+      "deleteError": "خطأ أثناء الحذف"
+    },
+    "table": {
+      "bureau": "المكتب",
+      "type": "النوع",
+      "year": "السنة",
+      "registreNumber": "رقم السجل",
+      "acteNumber": "رقم الوثيقة",
+      "uploadedBy": "تم التحميل بواسطة",
+      "date": "التاريخ",
+      "showing": "عرض",
+      "of": "من",
+      "andMore": "و {count} سجلات أخرى"
+    },
+    "comparison": {
+      "title": "المقارنة",
+      "summary": {
+        "totalInventory": "إجمالي الجرد",
+        "totalDocuments": "إجمالي الوثائق",
+        "matched": "متطابقة",
+        "missing": "ناقصة",
+        "extra": "إضافية",
+        "matchRate": "معدل التطابق"
+      },
+      "tabs": {
+        "matched": "متطابقة",
+        "missing": "ناقصة",
+        "extra": "إضافية"
+      },
+      "empty": {
+        "matched": "لا توجد تطابقات",
+        "missing": "لا توجد وثائق ناقصة",
+        "extra": "لا توجد وثائق إضافية"
+      },
+      "noData": "لا توجد بيانات متاحة"
+    },
+    "tree": {
+      "title": "العرض الهرمي للجرد",
+      "subtitle": "استكشف بنية الجرد مع الإحصائيات في كل مستوى: المكتب ← النوع ← السنة ← السجل",
+      "legend": {
+        "inventory": "الجرد",
+        "actual": "الوثائق الفعلية",
+        "matched": "متطابقة",
+        "missing": "ناقصة",
+        "extra": "إضافية"
+      },
+      "noData": "لا توجد بيانات شجرة متاحة",
+      "stats": {
+        "inventory": "الجرد",
+        "actual": "الفعلي",
+        "matched": "متطابق",
+        "missing": "ناقص",
+        "extra": "إضافي",
+        "rate": "المعدل"
+      }
+    },
+    "status": {
+      "matched": "متطابق",
+      "missing": "ناقص",
+      "extra": "إضافي",
+      "pending": "قيد الانتظار"
+    },
+    "registreTypes": {
+      "naissances": "الولادات",
+      "deces": "الوفيات",
+      "mariages": "الزواج",
+      "divorces": "الطلاق",
+      "transcriptions": "النسخ"
+    },
+    "messages": {
+      "loading": "جاري التحميل...",
+      "uploadSuccess": "تم تحميل الجرد بنجاح",
+      "compareSuccess": "تمت المقارنة",
+      "error": "حدث خطأ",
+      "noResults": "لا توجد نتائج"
+    },
+    "buttons": {
+      "upload": "تحميل",
+      "compare": "قارن",
+      "viewTree": "عرض الشجرة",
+      "export": "تصدير",
+      "delete": "حذف",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "apply": "تطبيق"
+    }
   }
 }
