@@ -235,6 +235,25 @@ function createTables() {
   db.run('CREATE INDEX IF NOT EXISTS idx_inventory_year ON inventory(year)');
   db.run('CREATE INDEX IF NOT EXISTS idx_inventory_batch ON inventory(upload_batch_id)');
   db.run('CREATE INDEX IF NOT EXISTS idx_inventory_acte ON inventory(acte_number)');
+
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS work_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      session_type TEXT NOT NULL CHECK(session_type IN ('login', 'logout')),
+      ip_address TEXT,
+      user_agent TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create indexes for work_sessions
+  db.run(`CREATE INDEX IF NOT EXISTS idx_work_sessions_user_id ON work_sessions(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_work_sessions_timestamp ON work_sessions(timestamp)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_work_sessions_type ON work_sessions(session_type)`);
+  
 }
 
 /**

@@ -65,6 +65,63 @@ apiClient.interceptors.response.use(
 
 // API methods
 export const api = {
+    // Performance - Session Tracking
+  logWorkSession: (sessionType: 'login' | 'logout') =>
+    apiClient.post('/api/performance/session', { session_type: sessionType }),
+
+  // Performance - User Reports
+  getUserPerformance: (userId: number, startDate: string, endDate: string) =>
+    apiClient.get(`/api/performance/user/${userId}`, {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  getHourlyDistribution: (userId: number, startDate: string, endDate: string) =>
+    apiClient.get(`/api/performance/user/${userId}/hourly`, {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  getDailyActivity: (userId: number, startDate: string, endDate: string) =>
+    apiClient.get(`/api/performance/user/${userId}/daily`, {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  getWorkHours: (userId: number, startDate: string, endDate: string) =>
+    apiClient.get(`/api/performance/user/${userId}/work-hours`, {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  // Performance - Admin Analytics
+  getPerformanceDashboard: (startDate: string, endDate: string) =>
+    apiClient.get('/api/performance/dashboard', {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  getWeeklyComparison: (startDate: string, endDate: string) =>
+    apiClient.get('/api/performance/weekly', {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  getMonthlyPerformance: (year: number, month: number) =>
+    apiClient.get('/api/performance/monthly', {
+      params: { year, month }
+    }),
+
+  getTopPerformers: (startDate: string, endDate: string, limit: number = 10) =>
+    apiClient.get('/api/performance/top-performers', {
+      params: { start_date: startDate, end_date: endDate, limit }
+    }),
+
+  getAllUsersPerformance: (startDate: string, endDate: string) =>
+    apiClient.get('/api/performance/all-users', {
+      params: { start_date: startDate, end_date: endDate }
+    }),
+
+  exportPerformanceCSV: (startDate: string, endDate: string) =>
+    apiClient.get('/api/performance/export/csv', {
+      params: { start_date: startDate, end_date: endDate },
+      responseType: 'blob'
+    }),
+
   // Auth
   login: (username: string, password: string) =>
     apiClient.post('/api/auth/login', { username, password }),
@@ -314,6 +371,11 @@ export const getTreeComparison = async (batchId: string): Promise<{ [key: string
   const response = await apiClient.get(`/api/inventory/tree/${batchId}`);
   return response.data.data;
 };
+
+// Performance API Methods
+// Add these to your existing api object in src/lib/api.ts
+
+
 
 
 export default apiClient;

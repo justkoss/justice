@@ -1,13 +1,12 @@
-const { query, queryOne, queryAll, runQuery } = require('../config/database');
+const { queryAll, queryOne, runQuery } = require('../config/database');
 
 /**
- * ActivityLog Model
- * Tracks all user actions in the system
+ * ActivityLog Model - Extended with Performance Analytics
+ * Uses existing activity_logs table for tracking all user activities
  */
 class ActivityLog {
   /**
    * Log an activity
-   * @param {Object} logData - Activity data
    */
   static create(logData) {
     const {
@@ -48,12 +47,23 @@ class ActivityLog {
       metadataJson
     ]);
 
-    return result ? result.lastID : null;
+    return result;
+  }
+
+  /**
+   * Log work session (login/logout)
+   */
+  static logWorkSession(userId, sessionType, ipAddress = null, userAgent = null) {
+    const sql = `
+      INSERT INTO work_sessions (user_id, session_type, ip_address, user_agent, timestamp)
+      VALUES (?, ?, ?, ?, datetime('now'))
+    `;
+
+    return runQuery(sql, [userId, sessionType, ipAddress, userAgent]);
   }
 
   /**
    * Get activity logs with filters
-   * @param {Object} filters - Filter options
    */
   static getAll(filters = {}) {
     const {
@@ -115,7 +125,6 @@ class ActivityLog {
 
     const logs = queryAll(sql, params);
 
-    // Parse metadata JSON
     return logs.map(log => ({
       ...log,
       metadata: log.metadata ? JSON.parse(log.metadata) : {}
@@ -123,35 +132,7 @@ class ActivityLog {
   }
 
   /**
-   * Get activity logs for a specific document
-   * @param {number} documentId - Document ID
-   */
-  static getDocumentHistory(documentId) {
-    const sql = `
-      SELECT 
-        al.*,
-        u.username,
-        u.full_name as user_full_name,
-        u.role as user_role
-      FROM activity_logs al
-      LEFT JOIN users u ON al.user_id = u.id
-      WHERE al.entity_type = 'document' AND al.entity_id = ?
-      ORDER BY al.created_at DESC
-    `;
-
-    const logs = queryAll(sql, [documentId]);
-    
-    return logs.map(log => ({
-      ...log,
-      metadata: log.metadata ? JSON.parse(log.metadata) : {}
-    }));
-  }
-
-  /**
-   * Get user activity summary
-   * @param {number} userId - User ID
-   * @param {string} dateFrom - Start date
-   * @param {string} dateTo - End date
+   * Get user activity summary by action type
    */
   static getUserActivitySummary(userId, dateFrom, dateTo) {
     const sql = `
@@ -170,8 +151,238 @@ class ActivityLog {
   }
 
   /**
+   * Get hourly activity distribution (productive hours analysis)
+   */
+  static getHourlyDistribution(userId, dateFrom, dateTo) {
+    const sql = `
+      SELECT 
+        strftime('%H', created_at) as hour,
+        COUNT(*) as activity_count
+      FROM activity_logs
+      WHERE user_id = ?
+        AND created_at >= ?
+        AND created_at <= ?
+      GROUP BY hour
+      ORDER BY hour ASC
+    `;
+
+    return queryAll(sql, [userId, dateFrom, dateTo]);
+  }
+
+  /**
+   * Get daily activity summary
+   */
+  static getDailyActivity(userId, dateFrom, dateTo) {
+    const sql = `
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as total_activities,
+        COUNT(DISTINCT action) as activity_types
+      FROM activity_logs
+      WHERE user_id = ?
+        AND created_at >= ?
+        AND created_at <= ?
+      GROUP BY date
+      ORDER BY date ASC
+    `;
+
+    return queryAll(sql, [userId, dateFrom, dateTo]);
+  }
+
+  /**
+   * Get work sessions for a user
+   */
+  static getWorkSessions(userId, dateFrom, dateTo) {
+    const sql = `
+      SELECT 
+        id,
+        user_id,
+        session_type,
+        ip_address,
+        user_agent,
+        timestamp
+      FROM work_sessions
+      WHERE user_id = ?
+        AND timestamp >= ?
+        AND timestamp <= ?
+      ORDER BY timestamp ASC
+    `;
+
+    return queryAll(sql, [userId, dateFrom, dateTo]);
+  }
+
+  /**
+   * Calculate work hours based on login/logout sessions
+   */
+  static calculateWorkHours(userId, dateFrom, dateTo) {
+    const sessions = this.getWorkSessions(userId, dateFrom, dateTo);
+    
+    let totalMinutes = 0;
+    let loginTime = null;
+    
+    for (const session of sessions) {
+      if (session.session_type === 'login') {
+        loginTime = new Date(session.timestamp);
+      } else if (session.session_type === 'logout' && loginTime) {
+        const logoutTime = new Date(session.timestamp);
+        const diffMinutes = (logoutTime - loginTime) / 1000 / 60;
+        totalMinutes += diffMinutes;
+        loginTime = null;
+      }
+    }
+    
+    return {
+      total_hours: Math.floor(totalMinutes / 60),
+      total_minutes: Math.round(totalMinutes % 60),
+      total_minutes_raw: Math.round(totalMinutes)
+    };
+  }
+
+  /**
+   * Get comprehensive performance report for a user
+   */
+  static getUserPerformanceReport(userId, dateFrom, dateTo) {
+    const activities = this.getUserActivitySummary(userId, dateFrom, dateTo);
+    const hourlyDist = this.getHourlyDistribution(userId, dateFrom, dateTo);
+    const dailyActivity = this.getDailyActivity(userId, dateFrom, dateTo);
+    const workHours = this.calculateWorkHours(userId, dateFrom, dateTo);
+    
+    const totalActivities = activities.reduce((sum, a) => sum + a.count, 0);
+    const activeDays = dailyActivity.length;
+    
+    return {
+      user_id: userId,
+      date_range: { start: dateFrom, end: dateTo },
+      summary: {
+        total_activities: totalActivities,
+        active_days: activeDays,
+        avg_activities_per_day: activeDays > 0 ? (totalActivities / activeDays).toFixed(2) : 0,
+        work_hours: workHours
+      },
+      activities_by_type: activities,
+      hourly_distribution: hourlyDist,
+      daily_activity: dailyActivity
+    };
+  }
+
+  /**
+   * Get weekly performance comparison for all users
+   */
+  static getWeeklyComparison(dateFrom, dateTo) {
+    const sql = `
+      SELECT 
+        u.id as user_id,
+        u.username,
+        u.full_name,
+        u.role,
+        COUNT(al.id) as total_activities,
+        strftime('%W', al.created_at) as week_number,
+        strftime('%Y', al.created_at) as year
+      FROM users u
+      LEFT JOIN activity_logs al ON u.id = al.user_id
+        AND al.created_at >= ?
+        AND al.created_at <= ?
+      WHERE u.status = 'active'
+      GROUP BY u.id, week_number, year
+      ORDER BY year DESC, week_number DESC, total_activities DESC
+    `;
+
+    return queryAll(sql, [dateFrom, dateTo]);
+  }
+
+  /**
+   * Get monthly performance for all users
+   */
+  static getMonthlyPerformance(year, month) {
+    const sql = `
+      SELECT 
+        u.id as user_id,
+        u.username,
+        u.full_name,
+        u.role,
+        COUNT(al.id) as total_activities,
+        COUNT(DISTINCT DATE(al.created_at)) as active_days
+      FROM users u
+      LEFT JOIN activity_logs al ON u.id = al.user_id
+        AND strftime('%Y', al.created_at) = ?
+        AND strftime('%m', al.created_at) = ?
+      WHERE u.status = 'active'
+      GROUP BY u.id
+      ORDER BY total_activities DESC
+    `;
+
+    return queryAll(sql, [year.toString(), month.toString().padStart(2, '0')]);
+  }
+
+  /**
+   * Get top performers
+   */
+  static getTopPerformers(dateFrom, dateTo, limit = 10) {
+    const sql = `
+      SELECT 
+        u.id as user_id,
+        u.username,
+        u.full_name,
+        u.role,
+        COUNT(al.id) as total_activities,
+        COUNT(DISTINCT DATE(al.created_at)) as active_days,
+        ROUND(COUNT(al.id) * 1.0 / COUNT(DISTINCT DATE(al.created_at)), 2) as avg_activities_per_day
+      FROM users u
+      LEFT JOIN activity_logs al ON u.id = al.user_id
+        AND al.created_at >= ?
+        AND al.created_at <= ?
+      WHERE u.status = 'active' AND al.id IS NOT NULL
+      GROUP BY u.id
+      ORDER BY total_activities DESC
+      LIMIT ?
+    `;
+
+    return queryAll(sql, [dateFrom, dateTo, limit]);
+  }
+
+  /**
+   * Get all users performance data for CSV export
+   */
+  static getAllUsersPerformanceData(dateFrom, dateTo) {
+    const sql = `
+      SELECT 
+        u.id,
+        u.username,
+        u.full_name,
+        u.email,
+        u.role,
+        COUNT(al.id) as total_activities,
+        COUNT(DISTINCT DATE(al.created_at)) as active_days,
+        COUNT(DISTINCT CASE WHEN al.action = 'document_upload' THEN al.id END) as documents_uploaded,
+        COUNT(DISTINCT CASE WHEN al.action = 'field_update' THEN al.id END) as fields_filled,
+        COUNT(DISTINCT CASE WHEN al.action = 'document_review' THEN al.id END) as documents_reviewed,
+        COUNT(DISTINCT CASE WHEN al.action = 'document_approve' THEN al.id END) as documents_approved,
+        COUNT(DISTINCT CASE WHEN al.action = 'document_reject' THEN al.id END) as documents_rejected,
+        COUNT(DISTINCT CASE WHEN al.action = 'ocr_process' THEN al.id END) as ocr_processed
+      FROM users u
+      LEFT JOIN activity_logs al ON u.id = al.user_id
+        AND al.created_at >= ?
+        AND al.created_at <= ?
+      WHERE u.status = 'active'
+      GROUP BY u.id
+      ORDER BY total_activities DESC
+    `;
+
+    const usersData = queryAll(sql, [dateFrom, dateTo]);
+    
+    // Add work hours for each user
+    return usersData.map(user => {
+      const workHours = this.calculateWorkHours(user.id, dateFrom, dateTo);
+      return {
+        ...user,
+        work_hours: workHours.total_hours,
+        work_minutes: workHours.total_minutes
+      };
+    });
+  }
+
+  /**
    * Get recent activity (system-wide)
-   * @param {number} limit - Number of records
    */
   static getRecent(limit = 20) {
     const sql = `
@@ -196,8 +407,6 @@ class ActivityLog {
 
   /**
    * Get activity statistics
-   * @param {string} dateFrom - Start date
-   * @param {string} dateTo - End date
    */
   static getStatistics(dateFrom, dateTo) {
     const sql = `
@@ -218,7 +427,6 @@ class ActivityLog {
 
   /**
    * Delete old activity logs (cleanup)
-   * @param {number} daysToKeep - Number of days to keep
    */
   static deleteOldLogs(daysToKeep = 90) {
     const sql = `

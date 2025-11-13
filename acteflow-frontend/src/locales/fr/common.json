@@ -495,5 +495,50 @@
       "close": "Fermer",
       "apply": "Appliquer"
     }
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Suivez et analysez les performances de tous les utilisateurs",
+    "exportCSV": "Exporter CSV",
+    "to": "à",
+    
+    "totalActivities": "Activités totales",
+    "activeUsers": "Utilisateurs actifs",
+    "avgActivitiesPerUser": "Moyenne par utilisateur",
+    "activeDays": "Jours actifs",
+    "avgPerDay": "Moyenne par jour",
+    "workHours": "Heures de travail",
+    
+    "overview": "Vue d'ensemble",
+    "topPerformers": "Meilleurs performers",
+    "weeklyComparison": "Comparaison hebdomadaire",
+    
+    "topPerformersTitle": "Top 10 des meilleurs performers",
+    "rank": "Rang",
+    "user": "Utilisateur",
+    "role": "Rôle",
+    "activities": "Activités",
+    
+    "weeklyComparisonTitle": "Comparaison hebdomadaire des performances",
+    "allUsersPerformance": "Performance de tous les utilisateurs",
+    
+    "documentsUploaded": "Documents téléchargés",
+    "fieldsFilled": "Champs remplis",
+    "documentsReviewed": "Documents examinés",
+    "documentsApproved": "Documents approuvés",
+    "documentsRejected": "Documents rejetés",
+    "ocrProcessed": "OCR traités",
+    
+    "backToDashboard": "Retour au tableau de bord",
+    "activitiesByType": "Activités par type",
+    "activityType": "Type d'activité",
+    "count": "Nombre",
+    
+    "productiveHours": "Heures productives",
+    "productiveHoursDesc": "Ce graphique montre la distribution des activités par heure pour identifier les heures les plus productives et les pauses de travail.",
+    "dailyActivityTrend": "Tendance d'activité quotidienne",
+    
+    "hour": "Heure",
+    "date": "Date"
   }
 }

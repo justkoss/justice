@@ -69,6 +69,12 @@ export function Sidebar() {
       icon: <Search className="h-5 w-5" />,
       roles: ['admin', 'supervisor', 'agent'], // All roles
     },
+    {
+      href: '/dashboard/performance',
+      label: t('inventory.title'),
+      icon: <Search className="h-5 w-5" />,
+      roles: ['admin'], // All roles
+    },
   ];
 
   // Filter nav items based on user role

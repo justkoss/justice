@@ -495,5 +495,50 @@
       "close": "إغلاق",
       "apply": "تطبيق"
     }
+  },
+  "performance": {
+    "title": "الأداء",
+    "subtitle": "تتبع وتحليل أداء جميع المستخدمين",
+    "exportCSV": "تصدير CSV",
+    "to": "إلى",
+    
+    "totalActivities": "إجمالي الأنشطة",
+    "activeUsers": "المستخدمون النشطون",
+    "avgActivitiesPerUser": "المتوسط لكل مستخدم",
+    "activeDays": "الأيام النشطة",
+    "avgPerDay": "المتوسط في اليوم",
+    "workHours": "ساعات العمل",
+    
+    "overview": "نظرة عامة",
+    "topPerformers": "أفضل الموظفين",
+    "weeklyComparison": "المقارنة الأسبوعية",
+    
+    "topPerformersTitle": "أفضل 10 موظفين أداءً",
+    "rank": "الترتيب",
+    "user": "المستخدم",
+    "role": "الدور",
+    "activities": "الأنشطة",
+    
+    "weeklyComparisonTitle": "المقارنة الأسبوعية للأداء",
+    "allUsersPerformance": "أداء جميع المستخدمين",
+    
+    "documentsUploaded": "الوثائق المرفوعة",
+    "fieldsFilled": "الحقول المعبأة",
+    "documentsReviewed": "الوثائق المراجعة",
+    "documentsApproved": "الوثائق الموافق عليها",
+    "documentsRejected": "الوثائق المرفوضة",
+    "ocrProcessed": "معالجة OCR",
+    
+    "backToDashboard": "العودة إلى لوحة المعلومات",
+    "activitiesByType": "الأنشطة حسب النوع",
+    "activityType": "نوع النشاط",
+    "count": "العدد",
+    
+    "productiveHours": "الساعات الإنتاجية",
+    "productiveHoursDesc": "يوضح هذا الرسم البياني توزيع الأنشطة حسب الساعة لتحديد أكثر الساعات إنتاجية وفترات الراحة في العمل.",
+    "dailyActivityTrend": "اتجاه النشاط اليومي",
+    
+    "hour": "الساعة",
+    "date": "التاريخ"
   }
 }

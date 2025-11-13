@@ -228,3 +228,111 @@ export const REGISTRE_TYPES = [
 
 export type Bureau = typeof BUREAUX[number];
 export type RegistreType = typeof REGISTRE_TYPES[number];
+
+export interface WorkSession {
+  id: number;
+  user_id: number;
+  session_type: 'login' | 'logout';
+  ip_address?: string;
+  user_agent?: string;
+  timestamp: string;
+}
+
+// Performance Summary types
+export interface PerformanceSummary {
+  total_activities: number;
+  active_days: number;
+  avg_activities_per_day: string;
+  work_hours: {
+    total_hours: number;
+    total_minutes: number;
+    total_minutes_raw: number;
+  };
+}
+
+// Activity Summary types
+export interface ActivitySummary {
+  action: string;
+  count: number;
+}
+
+// Hourly Distribution types
+export interface HourlyDistribution {
+  hour: string;
+  activity_count: number;
+}
+
+// Daily Activity types
+export interface DailyActivity {
+  date: string;
+  total_activities: number;
+  activity_types: number;
+}
+
+// User Performance Report types
+export interface UserPerformanceReport {
+  user_id: number;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  summary: PerformanceSummary;
+  activities_by_type: ActivitySummary[];
+  hourly_distribution: HourlyDistribution[];
+  daily_activity: DailyActivity[];
+}
+
+// Top Performer types
+export interface TopPerformer {
+  user_id: number;
+  username: string;
+  full_name: string;
+  role: UserRole;
+  total_activities: number;
+  active_days: number;
+  avg_activities_per_day: number;
+}
+
+// Weekly Comparison types
+export interface WeeklyComparison {
+  user_id: number;
+  username: string;
+  full_name: string;
+  role: UserRole;
+  total_activities: number;
+  week_number: string;
+  year: string;
+}
+
+// All Users Performance types
+export interface UserPerformanceData {
+  id: number;
+  username: string;
+  full_name: string;
+  email: string;
+  role: UserRole;
+  total_activities: number;
+  active_days: number;
+  documents_uploaded: number;
+  fields_filled: number;
+  documents_reviewed: number;
+  documents_approved: number;
+  documents_rejected: number;
+  ocr_processed: number;
+  work_hours: number;
+  work_minutes: number;
+}
+
+// Dashboard Overview types
+export interface DashboardOverview {
+  summary: {
+    total_activities: number;
+    active_users: number;
+    avg_activities_per_user: number;
+  };
+  top_performers: TopPerformer[];
+  all_users: UserPerformanceData[];
+}
+
+// Performance API Response types
+export interface PerformanceResponse<T> extends ApiResponse<T> {}
