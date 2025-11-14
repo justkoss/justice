@@ -156,7 +156,10 @@ function startFolderWatch(folderPath) {
 
   watcher
     .on('add', (filePath) => {
-      if (path.extname(filePath).toLowerCase() === '.pdf') {
+      const ext = path.extname(filePath).toLowerCase();
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'];
+      
+      if (imageExtensions.includes(ext)) {
         const filename = path.basename(filePath);
         
         const existing = queryDb('SELECT * FROM documents WHERE filepath = ?', [filePath]);
@@ -450,7 +453,7 @@ ipcMain.handle('update-document', (event, id, data) => {
 ipcMain.handle('select-file-for-reupload', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
-    filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'] }]
   });
   
   if (!result.canceled && result.filePaths.length > 0) {

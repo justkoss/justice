@@ -42,6 +42,7 @@ async function syncDocument(req, res) {
       original_filename: metadata.filename || req.file.originalname,
       file_path: req.file.path,
       file_size: req.file.size,
+      file_type: req.file.mimetype,
       bureau: metadata.bureau,
       registre_type: metadata.registreType,
       year: parseInt(metadata.year),
@@ -60,7 +61,7 @@ async function syncDocument(req, res) {
     logger.logDocumentUpload(req, document.id, 
       `Uploaded ${document.original_filename} to ${document.bureau}/${document.registre_type}/${document.year}`);
     
-    console.log(`✅ Document synchronized: ${document?.original_filename || "no_name.pdf" } by ${req.user.username}`);
+    console.log(`✅ Document synchronized: ${document?.original_filename || "no_name" } by ${req.user.username}`);
     
     res.json({
       success: true,
@@ -287,7 +288,9 @@ async function approveDocument(req, res) {
       fs.mkdirSync(storedDir, { recursive: true });
     }
     
-    const storedPath = path.join(storedDir, `${document.acte_number}.pdf`);
+    // Get file extension from original filename
+    const fileExtension = path.extname(document.original_filename);
+    const storedPath = path.join(storedDir, `${document.acte_number}${fileExtension}`);
     
     // Move file
     if (fs.existsSync(document.file_path)) {
@@ -500,8 +503,9 @@ async function getDocumentFile(req, res) {
       });
     }
     
-    // Set headers for PDF display
-    res.setHeader('Content-Type', 'application/pdf');
+    // Set headers for image display with dynamic content-type
+    const contentType = document.file_type || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `inline; filename="${document.original_filename}"`);
     res.setHeader('Cache-Control', 'private, max-age=3600'); // Cache for 1 hour
     

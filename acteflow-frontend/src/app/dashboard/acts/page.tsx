@@ -70,6 +70,9 @@ export default function ActsPage() {
       setShowActivityLog(false);
     } else if (doc.status === 'processing') {
       handleDocumentProcessing(doc.id);
+    } else if (doc.status === 'stored') {
+      // Navigate to processing page for stored documents
+      handleDocumentProcessing(doc.id);
     } else {
       setSelectedDocumentId(doc.id);
       setShowActivityLog(false);

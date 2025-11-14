@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import {
   ZoomIn, 
   ZoomOut, 
   Download,
-  RotateCw,
+  Maximize2,
   Loader2
 } from 'lucide-react';
 import type { Document } from '@/types';
@@ -22,14 +22,18 @@ interface DocumentViewerProps {
 
 export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
   const { t } = useTranslation();
-  const [zoom, setZoom] = useState(100);
-  const [rotation, setRotation] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [imageBlobUrl, setImageBlobUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  // Fetch PDF with authentication
+  // Fetch image with authentication
   useEffect(() => {
-    const fetchPdf = async () => {
+    const fetchImage = async () => {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(
@@ -44,31 +48,41 @@ export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
         if (response.ok) {
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
-          setPdfBlobUrl(url);
+          setImageBlobUrl(url);
           setLoading(false);
         } else {
-          console.error('Failed to fetch PDF:', response.statusText);
+          console.error('Failed to fetch image:', response.statusText);
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching PDF:', error);
+        console.error('Error fetching image:', error);
         setLoading(false);
       }
     };
 
-    fetchPdf();
+    fetchImage();
 
     // Cleanup blob URL on unmount
     return () => {
-      if (pdfBlobUrl) {
-        URL.revokeObjectURL(pdfBlobUrl);
+      if (imageBlobUrl) {
+        URL.revokeObjectURL(imageBlobUrl);
       }
     };
   }, [doc.id]);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 25, 200));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 25, 50));
-  const handleRotate = () => setRotation((prev) => (prev + 90) % 360);
+  // Reset zoom and position when document changes
+  useEffect(() => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  }, [doc.id]);
+
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.5));
+  const handleFitScreen = () => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
   const handleDownload = async () => {
     const token = localStorage.getItem('token');
     const response = await fetch(
@@ -93,9 +107,41 @@ export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom > 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoom > 1) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      setZoom((prev) => Math.min(prev + 0.1, 3));
+    } else {
+      setZoom((prev) => Math.max(prev - 0.1, 0.5));
+    }
+  };
+
   return (
     <div className="h-full flex flex-col lg:flex-row gap-6">
-      {/* PDF Viewer */}
+      {/* Image Viewer */}
       <div className="flex-1 flex flex-col">
         <Card className="flex-1 flex flex-col">
           {/* Toolbar */}
@@ -109,21 +155,21 @@ export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomOut}
-                disabled={zoom <= 50}
+                disabled={zoom <= 0.5}
                 title={t('common.zoomOut')}
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
               
               <span className="text-sm text-text-secondary px-2">
-                {zoom}%
+                {Math.round(zoom * 100)}%
               </span>
               
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomIn}
-                disabled={zoom >= 200}
+                disabled={zoom >= 3}
                 title={t('common.zoomIn')}
               >
                 <ZoomIn className="h-4 w-4" />
@@ -134,10 +180,10 @@ export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleRotate}
-                title={t('common.rotate')}
+                onClick={handleFitScreen}
+                title="Fit to screen"
               >
-                <RotateCw className="h-4 w-4" />
+                <Maximize2 className="h-4 w-4" />
               </Button>
 
               <Button
@@ -151,8 +197,12 @@ export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
             </div>
           </div>
 
-          {/* PDF Container */}
-          <div className="flex-1 overflow-auto bg-bg-tertiary relative">
+          {/* Image Container */}
+          <div 
+            ref={containerRef}
+            className="flex-1 overflow-hidden bg-bg-tertiary relative"
+            onWheel={handleWheel}
+          >
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
@@ -162,21 +212,32 @@ export function DocumentViewer({ doc, onReviewComplete }: DocumentViewerProps) {
               </div>
             )}
             
-            {!loading && pdfBlobUrl && (
-              <div className="p-8 flex items-center justify-center min-h-full">
-                <iframe
-                  src={`${pdfBlobUrl}#toolbar=0`}
-                  className="w-full h-full min-h-[600px] border border-border-primary rounded-lg shadow-lg"
+            {!loading && imageBlobUrl && (
+              <div 
+                className="w-full h-full flex items-center justify-center p-8"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                style={{ 
+                  cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+                }}
+              >
+                <img
+                  ref={imageRef}
+                  src={imageBlobUrl}
+                  alt={doc.original_filename}
+                  className="max-w-full max-h-full object-contain select-none"
                   style={{
-                    transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                    transformOrigin: 'center center',
+                    transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                    transition: isDragging ? 'none' : 'transform 0.1s ease',
                   }}
-                  title={doc.original_filename}
+                  draggable={false}
                 />
               </div>
             )}
 
-            {!loading && !pdfBlobUrl && (
+            {!loading && !imageBlobUrl && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <p className="text-text-secondary">{t('errors.generic')}</p>

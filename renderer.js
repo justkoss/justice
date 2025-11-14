@@ -13,6 +13,21 @@ let reuploadedDocs = []; // Track locally which docs have been re-uploaded
 const fs = require('fs');
 const logFile = path.join(__dirname, 'app.log');
 
+// Helper function to get MIME type from file extension
+function getMimeType(filepath) {
+  const ext = path.extname(filepath).toLowerCase();
+  const mimeTypes = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.bmp': 'image/bmp',
+    '.webp': 'image/webp',
+    '.tiff': 'image/tiff'
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
 function logToFile(msg) {
   const entry = `${new Date().toISOString()} - ${msg}\n`;
   fs.appendFileSync(logFile, entry);
@@ -65,6 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Setup event listeners
   setupEventListeners();
+  
+  // Setup image viewer controls
+  setupImageViewerControls();
   
   // Initialize searchable selects
   initializeSearchableSelects();
@@ -654,10 +672,11 @@ async function saveModification() {
     // Create FormData
     const formData = new FormData();
     
-    // Read file as blob
+    // Read file as blob with correct MIME type
     const fs = require('fs');
     const fileBuffer = fs.readFileSync(selectedNewFile);
-    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    const mimeType = getMimeType(selectedNewFile);
+    const blob = new Blob([fileBuffer], { type: mimeType });
     formData.append('file', blob, path.basename(selectedNewFile));
     
     // Add metadata
@@ -741,12 +760,107 @@ async function saveModification() {
 function showDocument(filepath) {
   const viewer = document.getElementById('documentViewer');
   const noSelection = document.getElementById('noSelection');
-  const pdfEmbed = document.getElementById('pdfEmbed');
+  const imageViewer = document.getElementById('imageViewer');
   
   noSelection.style.display = 'none';
   viewer.style.display = 'block';
   
-  pdfEmbed.src = filepath;
+  // Display image instead of PDF
+  imageViewer.src = filepath;
+  
+  // Reset zoom and pan when showing new document
+  resetImageViewer();
+}
+
+// Image viewer zoom and pan functionality
+let imageScale = 1;
+let imageTranslateX = 0;
+let imageTranslateY = 0;
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+
+function resetImageViewer() {
+  imageScale = 1;
+  imageTranslateX = 0;
+  imageTranslateY = 0;
+  updateImageTransform();
+}
+
+function updateImageTransform() {
+  const imageViewer = document.getElementById('imageViewer');
+  if (imageViewer) {
+    imageViewer.style.transform = `scale(${imageScale}) translate(${imageTranslateX}px, ${imageTranslateY}px)`;
+  }
+}
+
+function setupImageViewerControls() {
+  const imageViewer = document.getElementById('imageViewer');
+  const zoomInBtn = document.getElementById('zoomInBtn');
+  const zoomOutBtn = document.getElementById('zoomOutBtn');
+  const fitScreenBtn = document.getElementById('fitScreenBtn');
+  
+  if (!imageViewer) return;
+  
+  // Zoom buttons
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener('click', () => {
+      imageScale = Math.min(imageScale + 0.25, 3);
+      updateImageTransform();
+    });
+  }
+  
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener('click', () => {
+      imageScale = Math.max(imageScale - 0.25, 0.5);
+      updateImageTransform();
+    });
+  }
+  
+  if (fitScreenBtn) {
+    fitScreenBtn.addEventListener('click', () => {
+      resetImageViewer();
+    });
+  }
+  
+  // Mouse wheel zoom
+  imageViewer.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      imageScale = Math.min(imageScale + 0.1, 3);
+    } else {
+      imageScale = Math.max(imageScale - 0.1, 0.5);
+    }
+    updateImageTransform();
+  });
+  
+  // Pan functionality
+  imageViewer.addEventListener('mousedown', (e) => {
+    if (imageScale > 1) {
+      isDragging = true;
+      dragStartX = e.clientX - imageTranslateX;
+      dragStartY = e.clientY - imageTranslateY;
+      imageViewer.style.cursor = 'grabbing';
+    }
+  });
+  
+  imageViewer.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      imageTranslateX = e.clientX - dragStartX;
+      imageTranslateY = e.clientY - dragStartY;
+      updateImageTransform();
+    }
+  });
+  
+  imageViewer.addEventListener('mouseup', () => {
+    isDragging = false;
+    imageViewer.style.cursor = imageScale > 1 ? 'grab' : 'default';
+  });
+  
+  imageViewer.addEventListener('mouseleave', () => {
+    isDragging = false;
+    imageViewer.style.cursor = imageScale > 1 ? 'grab' : 'default';
+  });
 }
 
 // Hide All Forms
@@ -819,10 +933,11 @@ async function syncDocument() {
     // Create FormData
     const formData = new FormData();
     
-    // Read file
+    // Read file with correct MIME type
     const fs = require('fs');
     const fileBuffer = fs.readFileSync(currentDocument.filepath);
-    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    const mimeType = getMimeType(currentDocument.filepath);
+    const blob = new Blob([fileBuffer], { type: mimeType });
     formData.append('file', blob, currentDocument.filename);
     
     // Add metadata
@@ -911,7 +1026,8 @@ async function syncAllProcessedDocuments() {
       const formData = new FormData();
       const fs = require('fs');
       const fileBuffer = fs.readFileSync(doc.filepath);
-      const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+      const mimeType = getMimeType(doc.filepath);
+      const blob = new Blob([fileBuffer], { type: mimeType });
       formData.append('file', blob, doc.filename);
       
       const metadata = {

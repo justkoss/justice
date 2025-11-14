@@ -12,6 +12,7 @@ class Document {
       original_filename,
       file_path,
       file_size,
+      file_type,
       bureau,
       registre_type,
       year,
@@ -22,17 +23,20 @@ class Document {
       processed_at
     } = documentData;
     
-    // Generate virtual path: Bureau/RegistreType/Year/RegistreNumber/ActeNumber.pdf
-    const virtual_path = `${bureau}/${registre_type}/${year}/${registre_number}/${acte_number}.pdf`;
+    // Get file extension from original filename
+    const fileExtension = path.extname(original_filename);
+    
+    // Generate virtual path: Bureau/RegistreType/Year/RegistreNumber/ActeNumber.ext
+    const virtual_path = `${bureau}/${registre_type}/${year}/${registre_number}/${acte_number}${fileExtension}`;
     
     const documentId = runQuery(`
       INSERT INTO documents (
-        filename, original_filename, file_path, file_size,
+        filename, original_filename, file_path, file_size, file_type,
         bureau, registre_type, year, registre_number, acte_number,
         uploaded_by, desktop_document_id, processed_at, virtual_path, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      filename, original_filename, file_path, file_size,
+      filename, original_filename, file_path, file_size, file_type,
       bureau, registre_type, year, registre_number, acte_number,
       uploaded_by, desktop_document_id, processed_at, virtual_path, 'pending'
     ]);

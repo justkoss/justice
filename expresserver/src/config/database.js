@@ -78,6 +78,7 @@ function createTables() {
       original_filename TEXT NOT NULL,
       file_path TEXT NOT NULL,
       file_size INTEGER,
+      file_type TEXT,
       
       -- Metadata from desktop app
       bureau TEXT NOT NULL,
@@ -104,7 +105,7 @@ function createTables() {
       rejection_reason TEXT,
       rejection_error_type TEXT,
       
-      -- Virtual tree path (e.g., Anfa/naissances/2024/R001/A0001.pdf)
+      -- Virtual tree path (e.g., Anfa/naissances/2024/R001/A0001.jpg)
       virtual_path TEXT,
       
       -- Desktop app compatibility
