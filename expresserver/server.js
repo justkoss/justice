@@ -21,6 +21,7 @@ const searchRoutes = require('./src/routes/search');
 const activityLogRoutes = require('./src/routes/activityLogs');
 const InventoryRoutes = require('./src/routes/Inventory');
 const PerformanceRoutes = require('./src/routes/performance');
+const marginalMentionsRoutes = require('./src/routes/marginalMentions');
 
 // Initialize Express app
 const app = express();
@@ -65,6 +66,8 @@ initDatabase().then(() => {
   app.use('/api/activity-logs', activityLogRoutes);
   app.use('/api/inventory', InventoryRoutes);
   app.use('/api/performance', PerformanceRoutes);
+  app.use('/api/documents', marginalMentionsRoutes);
+  app.use('/api', marginalMentionsRoutes);
   // 404 handler
   app.use(notFound);
   

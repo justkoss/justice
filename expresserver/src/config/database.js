@@ -254,6 +254,32 @@ function createTables() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_work_sessions_user_id ON work_sessions(user_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_work_sessions_timestamp ON work_sessions(timestamp)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_work_sessions_type ON work_sessions(session_type)`);
+
+  // Marginal mentions table (البينات الهامشية)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS marginal_mentions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      document_id INTEGER NOT NULL,
+      mention_type TEXT NOT NULL,
+      mention_date TEXT,
+      mention_text TEXT,
+      civil_officer_signature INTEGER DEFAULT 0,
+      person_first_name TEXT,
+      person_last_name TEXT,
+      officer_title TEXT,
+      changes_occurred TEXT,
+      change_description TEXT,
+      created_by INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    )
+  `);
+
+  // Create indexes for marginal_mentions table
+  db.run(`CREATE INDEX IF NOT EXISTS idx_marginal_mentions_document_id ON marginal_mentions(document_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_marginal_mentions_created_by ON marginal_mentions(created_by)`);
   
 }
 

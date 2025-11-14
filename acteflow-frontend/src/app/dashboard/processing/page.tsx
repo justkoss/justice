@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { DynamicFieldForm } from '@/components/features/DynamicFieldForm';
+import { MarginalMentions } from '@/components/features/MarginalMentions';
 import { useDocument, useDocumentFields, useOcrDocument } from '@/hooks/useDocuments';
 import { 
   ZoomIn, 
@@ -28,6 +29,7 @@ export default function ProcessingPage() {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [ocrFields, setOcrFields] = useState<Record<string, any> | null>(null);
+  const [activeTab, setActiveTab] = useState<'fields' | 'marginal'>('fields');
 
   const { data: document, isLoading: docLoading } = useDocument(documentId ? parseInt(documentId) : null);
   const { data: fieldsData, refetch: refetchFields } = useDocumentFields(documentId ? parseInt(documentId) : null);
@@ -246,36 +248,65 @@ export default function ProcessingPage() {
 
           {/* Form Column - Right Side - 40% width */}
           <div className="w-[40%] h-full flex flex-col bg-bg-secondary rounded-xl border border-border-primary overflow-hidden">
-            {/* Form Header - Fixed */}
+            {/* Form Header with Tabs - Fixed */}
             <div className="p-4 border-b border-border-primary flex-shrink-0">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-text-primary">
-                  {t('documents.extractedFields')}
-                </h3>
-                
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleOcr}
-                  isLoading={ocrMutation.isPending}
-                  icon={<Sparkles className="h-4 w-4" />}
-                  disabled={!document}
+              {/* Tab Buttons */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setActiveTab('fields')}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    activeTab === 'fields'
+                      ? 'bg-gold-primary text-bg-primary'
+                      : 'bg-bg-primary text-text-secondary hover:text-text-primary'
+                  }`}
                 >
-                  {t('documents.ocr')}
-                </Button>
+                  {t('documents.extractedFields')}
+                </button>
+                <button
+                  onClick={() => setActiveTab('marginal')}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    activeTab === 'marginal'
+                      ? 'bg-gold-primary text-bg-primary'
+                      : 'bg-bg-primary text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {t('marginalMentions.title')}
+                </button>
               </div>
 
-              {ocrMutation.isPending && (
-                <div className="flex items-center gap-2 text-sm text-info-light">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>{t('documents.ocrProcessing')}</span>
-                </div>
+              {/* OCR Button - Only shown on fields tab */}
+              {activeTab === 'fields' && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-text-primary">
+                      {t('documents.extractedFields')}
+                    </h3>
+                    
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleOcr}
+                      isLoading={ocrMutation.isPending}
+                      icon={<Sparkles className="h-4 w-4" />}
+                      disabled={!document}
+                    >
+                      {t('documents.ocr')}
+                    </Button>
+                  </div>
+
+                  {ocrMutation.isPending && (
+                    <div className="flex items-center gap-2 text-sm text-info-light mt-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{t('documents.ocrProcessing')}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
             {/* Form Content - Scrollable */}
             <div className="flex-1 overflow-y-auto p-4">
-              {document && documentId && (
+              {activeTab === 'fields' && document && documentId && (
                 <DynamicFieldForm
                   key={ocrFields ? 'ocr-fields' : 'saved-fields'} // Force re-render when OCR completes
                   documentId={parseInt(documentId)}
@@ -287,6 +318,10 @@ export default function ProcessingPage() {
                     refetchFields();
                   }}
                 />
+              )}
+
+              {activeTab === 'marginal' && document && documentId && (
+                <MarginalMentions documentId={parseInt(documentId)} />
               )}
 
               {!document && !docLoading && (
