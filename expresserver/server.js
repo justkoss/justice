@@ -22,6 +22,7 @@ const activityLogRoutes = require('./src/routes/activityLogs');
 const InventoryRoutes = require('./src/routes/Inventory');
 const PerformanceRoutes = require('./src/routes/performance');
 const marginalMentionsRoutes = require('./src/routes/marginalMentions');
+const verificationRoutes = require('./src/routes/verification');
 
 // Initialize Express app
 const app = express();
@@ -68,6 +69,7 @@ initDatabase().then(() => {
   app.use('/api/performance', PerformanceRoutes);
   app.use('/api/documents', marginalMentionsRoutes);
   app.use('/api', marginalMentionsRoutes);
+  app.use('/api/verification', verificationRoutes);
   // 404 handler
   app.use(notFound);
   

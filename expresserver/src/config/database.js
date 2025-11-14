@@ -280,6 +280,31 @@ function createTables() {
   // Create indexes for marginal_mentions table
   db.run(`CREATE INDEX IF NOT EXISTS idx_marginal_mentions_document_id ON marginal_mentions(document_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_marginal_mentions_created_by ON marginal_mentions(created_by)`);
+
+  // Excel records table for quantity verification
+  db.run(`
+    CREATE TABLE IF NOT EXISTS excel_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      batch_id TEXT NOT NULL,
+      n_serie TEXT,
+      bec TEXT,
+      type TEXT,
+      annee_hegire INTEGER,
+      annee_miladi INTEGER,
+      nbre_actes INTEGER,
+      nbre_actes_anomalie INTEGER,
+      numero_actes_anomalie TEXT,
+      uploaded_by INTEGER NOT NULL,
+      uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (uploaded_by) REFERENCES users(id)
+    )
+  `);
+
+  // Create indexes for excel_records table
+  db.run(`CREATE INDEX IF NOT EXISTS idx_excel_records_batch_id ON excel_records(batch_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_excel_records_bec ON excel_records(bec)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_excel_records_type ON excel_records(type)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_excel_records_annee ON excel_records(annee_miladi)`);
   
 }
 

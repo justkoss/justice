@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
-  BarChart2
+  BarChart2,
+  CheckSquare
 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,13 @@ export function Sidebar() {
       label: t('inventory.title'),
       icon: <ClipboardList className="h-5 w-5" />,
       roles: ['admin'], // All roles
+    }
+    ,
+    {
+      href: '/dashboard/verification',
+      label: t('verification.title'),
+      icon: <CheckSquare className="h-5 w-5" />,
+      roles: ['admin', 'supervisor'], // Admin and supervisor
     },
     {
       href: '/dashboard/acts',

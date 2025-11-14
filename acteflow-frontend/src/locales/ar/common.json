@@ -417,6 +417,7 @@
       "officerTitlePlaceholder": "صفة ضابط الحالة المدنية",
       "changesOccurred": "التغيرات الطارئة على البيان",
       "changesOccurredPlaceholder": "وصف التغيرات الطارئة",
+      "selectChangeType": "اختر نوع التغيير",
       "changeDescription": "التغيير",
       "changeDescriptionPlaceholder": "وصف التغيير"
     },
@@ -427,6 +428,45 @@
       "modification": "تغيير",
       "note": "ملاحظة",
       "other": "أخرى"
+    }
+  },
+  "verification": {
+    "title": "التحقق الكمي",
+    "subtitle": "قم بتحميل ملف Excel ومقارنته مع المستندات في قاعدة البيانات",
+    "uploadTitle": "تحميل ملف Excel",
+    "selectFile": "اختر ملف",
+    "upload": "تحميل",
+    "uploadSuccess": "تم تحميل ملف Excel بنجاح",
+    "uploadError": "فشل في تحميل الملف",
+    "deleteConfirm": "هل أنت متأكد من حذف هذه الدفعة؟",
+    "deleteSuccess": "تم حذف الدفعة بنجاح",
+    "deleteError": "فشل في حذف الدفعة",
+    "uploadedBatches": "الدفعات المحملة",
+    "noBatches": "لا توجد دفعات محملة",
+    "batch": "دفعة",
+    "records": "سجلات",
+    "compare": "مقارنة",
+    "comparisonTitle": "نتائج المقارنة",
+    "summary": {
+      "total": "المجموع",
+      "matched": "متطابق",
+      "missing": "ناقص",
+      "extra": "زائد",
+      "matchRate": "نسبة التطابق"
+    },
+    "table": {
+      "bureau": "المكتب",
+      "type": "النوع",
+      "year": "السنة",
+      "expected": "المتوقع",
+      "actual": "الفعلي",
+      "difference": "الفرق",
+      "status": "الحالة"
+    },
+    "status": {
+      "matched": "متطابق",
+      "missing": "ناقص",
+      "extra": "زائد"
     }
   },
   "inventory": {

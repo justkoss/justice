@@ -557,4 +557,31 @@ ipcMain.handle('clear-reupload-status', (event, serverDocId) => {
   }
 });
 
+// Search acte number from backend
+ipcMain.handle('search-acte-number', async (event, acteNumber) => {
+  try {
+    if (!jwtToken) {
+      return { success: false, found: false };
+    }
+
+    const response = await fetch(`${serverUrl}/api/verification/search-acte/${encodeURIComponent(acteNumber)}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      return { success: false, found: false };
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error searching acte number:', error);
+    return { success: false, found: false };
+  }
+});
+
 // mainWindow.webContents.openDevTools();

@@ -285,6 +285,19 @@ function setupEventListeners() {
   
   // Save modification button
   document.getElementById('saveModificationBtn').addEventListener('click', saveModification);
+  
+  // Auto-fill on acte number input (with debounce)
+  let acteNumberTimeout;
+  document.getElementById('acteNumber').addEventListener('input', (e) => {
+    clearTimeout(acteNumberTimeout);
+    const acteNumber = e.target.value.trim();
+    
+    if (acteNumber.length >= 2) {
+      acteNumberTimeout = setTimeout(async () => {
+        await searchAndFillActeData(acteNumber);
+      }, 500); // 500ms debounce
+    }
+  });
 }
 
 function switchTab(tabName) {
@@ -907,6 +920,48 @@ async function saveDocument() {
   // Re-render
   renderDocumentList();
   showProcessingForm(updated);
+}
+
+// Search and auto-fill acte data
+async function searchAndFillActeData(acteNumber) {
+  try {
+    const result = await ipcRenderer.invoke('search-acte-number', acteNumber);
+    
+    if (result && result.found && result.data) {
+      const data = result.data;
+      
+      // Auto-fill fields if they're empty
+      const bureauSelect = document.getElementById('bureau');
+      const registreTypeSelect = document.getElementById('registreType');
+      const yearInput = document.getElementById('documentYear');
+      const registreNumberInput = document.getElementById('registreNumber');
+      
+      if (!bureauSelect.value && data.bureau) {
+        bureauSelect.value = data.bureau;
+      }
+      
+      if (!registreTypeSelect.value && data.registre_type) {
+        registreTypeSelect.value = data.registre_type;
+      }
+      
+      if (!yearInput.value && data.year) {
+        yearInput.value = data.year;
+      }
+      
+      if (!registreNumberInput.value && data.registre_number) {
+        registreNumberInput.value = data.registre_number;
+      }
+      
+      // Show visual feedback
+      const acteInput = document.getElementById('acteNumber');
+      acteInput.style.borderColor = '#10b981'; // Green border
+      setTimeout(() => {
+        acteInput.style.borderColor = '';
+      }, 1000);
+    }
+  } catch (error) {
+    console.error('Error searching acte number:', error);
+  }
 }
 
 // Sync Document

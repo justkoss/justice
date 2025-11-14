@@ -417,6 +417,7 @@
       "officerTitlePlaceholder": "Titre de l'officier de l'état civil",
       "changesOccurred": "Changements survenus dans la mention",
       "changesOccurredPlaceholder": "Description des changements survenus",
+      "selectChangeType": "Sélectionnez le type de changement",
       "changeDescription": "Le changement",
       "changeDescriptionPlaceholder": "Description du changement"
     },
@@ -427,6 +428,45 @@
       "modification": "Modification",
       "note": "Note",
       "other": "Autre"
+    }
+  },
+  "verification": {
+    "title": "Vérification quantitative",
+    "subtitle": "Téléchargez un fichier Excel et comparez avec les documents de la base de données",
+    "uploadTitle": "Télécharger un fichier Excel",
+    "selectFile": "Sélectionner un fichier",
+    "upload": "Télécharger",
+    "uploadSuccess": "Fichier Excel téléchargé avec succès",
+    "uploadError": "Erreur lors du téléchargement du fichier",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce lot?",
+    "deleteSuccess": "Lot supprimé avec succès",
+    "deleteError": "Erreur lors de la suppression du lot",
+    "uploadedBatches": "Lots téléchargés",
+    "noBatches": "Aucun lot téléchargé",
+    "batch": "Lot",
+    "records": "enregistrements",
+    "compare": "Comparer",
+    "comparisonTitle": "Résultats de la comparaison",
+    "summary": {
+      "total": "Total",
+      "matched": "Correspondants",
+      "missing": "Manquants",
+      "extra": "En trop",
+      "matchRate": "Taux de correspondance"
+    },
+    "table": {
+      "bureau": "Bureau",
+      "type": "Type",
+      "year": "Année",
+      "expected": "Attendu",
+      "actual": "Réel",
+      "difference": "Différence",
+      "status": "Statut"
+    },
+    "status": {
+      "matched": "Correspondant",
+      "missing": "Manquant",
+      "extra": "En trop"
     }
   },
   "inventory": {
