@@ -13,7 +13,10 @@ import {
   Users,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ClipboardList,
+  BarChart2
+
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -42,7 +45,7 @@ export function Sidebar() {
     {
       href: '/dashboard/inventory',
       label: t('inventory.title'),
-      icon: <FileText className="h-5 w-5" />,
+      icon: <ClipboardList className="h-5 w-5" />,
       roles: ['admin'], // All roles
     },
     {
@@ -71,8 +74,8 @@ export function Sidebar() {
     },
     {
       href: '/dashboard/performance',
-      label: t('inventory.title'),
-      icon: <Search className="h-5 w-5" />,
+      label: t('performance.title'),
+      icon: <BarChart2 className="h-5 w-5" />,
       roles: ['admin'], // All roles
     },
   ];
